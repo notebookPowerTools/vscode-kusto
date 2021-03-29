@@ -2,7 +2,7 @@
 
 A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marketplace.visualstudio.com/items?itemName=donjayamanne.kusto) that provides the ability to run Kusto queries in Notebooks.
 
-<img src=https://raw.githubusercontent.com/donjayamanne/vscode-kusto/main/images/main.gif>
+<img src=https://raw.githubusercontent.com/DonJayamanne/vscode-kusto/main/images/main.gif>
 
 # Preview
 This extension is still in preview and a very early build with a long way to go before it is ready for day to day use.
