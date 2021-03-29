@@ -4,12 +4,19 @@ A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marke
 
 <img src=https://raw.githubusercontent.com/DonJayamanne/vscode-kusto/main/images/main.gif>
 
-# Preview
-This extension is still in preview and a very early build with a long way to go before it is ready for day to day use.
+# Getting Started
 * Please install VS Code Insiders (stable is not yet supported)
 * Ensure you have install the [Jupyter](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter) extension from the marketplace
+* Ensure you have install the [Kusto extensions pack](https://marketplace.visualstudio.com/items?itemName=rosshamish.kuskus-extensions-pack) from the marketplace
 * Install this extension
 * Launch VS Code with the following command line `code --enable-proposed-api=donjayamanne.kusto`
+* Create a notebook and select the `Kusto` kernel (from the bottom right of the statusbar or use `Select Notebook Kernel`)
+
+# Preview
+This extension is still in preview and a very early build with a long way to go before it is ready for day to day use.
+* Limited to VS Code Insiders
+* Launch VS Code with the following command line `code --enable-proposed-api=donjayamanne.kusto`
+* Authenticating (against Kustos clusters) is not the best experience.
 
 # Authentication
 * When running a cell you'll be prompted to entre the cluster name & default database.
