@@ -12,6 +12,7 @@
         "noImplicitThis": false,
         "noUnusedLocals": true,
         "noUnusedParameters": false,
-        "strict": true
+        "strict": true,
+        "noImplicitAny": false
     }
 }

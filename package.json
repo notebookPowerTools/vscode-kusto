@@ -1,73 +1,74 @@
 {
-    "name": "notebook-renderers",
-    "displayName": "Notebook Renderers",
-    "description": "Renderers for Notebooks",
+    "name": "kusto",
+    "displayName": "Kusto Notebooks",
+    "description": "Kusto Queries in Notebooks",
     "version": "0.0.1",
     "engines": {
-        "vscode": "^1.49.0"
+        "vscode": "^1.55.0"
     },
-    "publisher": "ms-toolsai",
+    "publisher": "donjayamanne",
     "enableProposedApi": true,
     "author": {
-        "name": "Microsoft Corporation"
+        "name": "Don Jayamanne"
     },
     "license": "MIT",
-    "homepage": "https://github.com/Microsoft/vscode-notebook-renderers",
+    "homepage": "https://github.com/DonJayamanne/vscode-kusto",
     "repository": {
         "type": "git",
-        "url": "https://github.com/Microsoft/vscode-notebook-renderers"
+        "url": "https://github.com/DonJayamanne/vscode-kusto"
     },
     "bugs": {
-        "url": "https://github.com/Microsoft/vscode-notebook-renderers/issues"
+        "url": "https://github.com/DonJayamanne/vscode-kusto/issues"
     },
     "preview": true,
-    "qna": "https://stackoverflow.com/questions/tagged/visual-studio-code+jupyter",
     "icon": "icon.png",
     "galleryBanner": {
         "color": "#ffffff",
         "theme": "light"
     },
     "keywords": [
-        "jupyter",
         "notebook",
+        "kusto",
         "multi-root ready"
     ],
     "categories": [
         "Other",
-        "Data Science",
-        "Machine Learning",
         "Notebooks",
         "Visualization"
     ],
-    "activationEvents": [
-        "*"
-    ],
-    "main": "./out/extension_renderer/index.js",
+    "extensionDependencies": [
+		"ms-toolsai.jupyter"
+	],
+	"activationEvents": [
+		"onNotebook:jupyter-notebook"
+	],
+    "main": "./out/extension/index.js",
     "contributes": {
         "notebookOutputRenderer": [
             {
-                "id": "jupyter-notebook-renderer",
-                "entrypoint": "./out/client_renderer/renderers.js",
-                "displayName": "Jupyter Notebook Renderer",
+                "id": "kusto-notebook-renderer-viz",
+                "entrypoint": "./out/renderer/visualization.js",
+                "displayName": "Charts",
                 "mimeTypes": [
-                    "application/geo+json",
-                    "application/vdom.v1+json",
-                    "application/vnd.dataresource+json",
-                    "application/vnd.plotly.v1+json",
-                    "application/vnd.vega.v2+json",
-                    "application/vnd.vega.v3+json",
-                    "application/vnd.vega.v4+json",
-                    "application/vnd.vega.v5+json",
-                    "application/vnd.vegalite.v1+json",
-                    "application/vnd.vegalite.v2+json",
-                    "application/vnd.vegalite.v3+json",
-                    "application/vnd.vegalite.v4+json",
-                    "application/x-nteract-model-debug+json",
-                    "image/gif",
-                    "image/png",
-                    "image/jpeg",
-                    "text/latex",
-                    "text/vnd.plotly.v1+html"
+                    "application/vnd.kusto.result.viz+json"
+                ]
+            },
+            {
+                "id": "kusto-notebook-renderer-dx",
+                "entrypoint": "./out/renderer/dataExplorer.js",
+                "displayName": "Data Explorer",
+                "mimeTypes": [
+                    "application/vnd.kusto.result+json",
+                    "application/vnd.kusto.result.viz+json"
+                ]
+            },
+            {
+                "id": "kusto-notebook-renderer-sand",
+                "entrypoint": "./out/renderer/sanddance.js",
+                "displayName": "Sanddance Explorer",
+                "mimeTypes": [
+                    "application/vnd.kusto.result+json",
+                    "application/vnd.kusto.result.viz+json"
                 ]
             }
         ]
@@ -88,40 +89,39 @@
         "lint": "eslint src --ext ts && eslint src --ext tsx && eslint build --ext js",
         "lint-format": "npx prettier 'src/**/*.ts*' --check && npx prettier 'build/**/*.js' --check",
         "watch": "tsc -watch -p ./",
-        "package": "vsce package -o ms-notebook-renderers.vsix",
+        "package": "vsce package -o kusto-notebooks.vsix",
         "test": "node ./out/test/runTest.js",
-        "prettier-fix": "prettier 'src/**/*.ts*' --write && prettier 'build/**/*.js' --write"
+        "prettier-fix": "prettier 'src/**/*.ts*' --write && prettier 'build/**/*.js' --write",
+        "download-api": "vscode-dts dev",
+        "postdownload-api": "vscode-dts main",
+        "postinstall": "npm run download-api"
     },
     "dependencies": {
-        "@jupyter-widgets/base": "^2.0.1",
-        "@jupyter-widgets/controls": "^1.5.2",
-        "@jupyter-widgets/jupyterlab-manager": "^1.0.2",
-        "@jupyter-widgets/output": "^2.0.1",
-        "@jupyterlab/coreutils": "^3.1.0",
-        "@loadable/component": "^5.12.0",
-        "@nteract/plotly": "^1.48.3",
-        "@nteract/transform-dataresource": "^4.3.5",
-        "@nteract/transform-geojson": "^3.2.3",
-        "@nteract/transform-model-debug": "^3.2.3",
-        "@nteract/transform-plotly": "^6.0.0",
-        "@nteract/transform-vega": "^6.0.3",
-        "@nteract/transforms": "^4.4.4",
-        "@phosphor/widgets": "^1.9.3",
+        "@deck.gl/core": "^8.3.7",
+        "@deck.gl/layers": "^8.3.7",
+        "@msrvida/sanddance-explorer": "^3",
+        "@luma.gl/core": "^8.3.1",
+        "@fluentui/react": "^7.150.0",
+        "vega": "^5.17.0",
+        "@nteract/data-explorer": "^8.2.9",
+        "azure-kusto-data": "^2.1.5",
         "lodash": "^4.17.19",
+        "plotly.js": "^1.58.4",
         "react": "^16.8.4",
         "react-dom": "^16.8.4",
+        "styled-components": "^5.2.1",
         "uuid": "^3.3.2"
     },
     "devDependencies": {
+        "@msrvida/fluentui-react-cdn-typings": "1",
         "@types/glob": "^7.1.1",
-        "@types/loadable__component": "^5.10.0",
         "@types/lodash": "^4.14.158",
         "@types/mocha": "^7.0.2",
         "@types/node": "^12.11.7",
-        "@types/react": "^16.9.35",
-        "@types/react-dom": "^16.9.8",
+        "@types/plotly.js": "^1.54.10",
+        "@types/react-dom": "16.9.8",
         "@types/uuid": "^8.0.0",
-        "@types/vscode": "^1.45.0",
+        "@types/vscode": "^1.54.0",
         "@types/vscode-notebook-renderer": "^1.55.0",
         "@typescript-eslint/eslint-plugin": "^3.1.0",
         "@typescript-eslint/parser": "^3.1.0",
@@ -135,6 +135,7 @@
         "eslint-plugin-prettier": "^3.1.3",
         "fork-ts-checker-webpack-plugin": "^4.1.6",
         "glob": "^7.1.6",
+        "ify-loader": "^1.1.0",
         "install": "^0.13.0",
         "less": "^3.11.3",
         "mocha": "^7.2.0",
@@ -143,9 +144,11 @@
         "style-loader": "^1.2.1",
         "svg-inline-loader": "^0.8.2",
         "thread-loader": "^2.1.3",
+        "transform-loader": "^0.2.4",
         "ts-loader": "^7.0.5",
         "typescript": "^3.9.3",
         "url-loader": "^4.1.0",
+        "vscode-dts": "^0.3.1",
         "vscode-test": "^1.4.0",
         "webpack": "^4.43.0",
         "webpack-bundle-analyzer": "^3.8.0",

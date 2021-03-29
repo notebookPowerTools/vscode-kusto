@@ -13,10 +13,12 @@ const isProdBuild = constants.isCI || process.argv.some((argv) => argv.includes(
 module.exports = {
     context: constants.ExtensionRootDir,
     entry: {
-        renderers: './src/client/index.tsx'
+        visualization: './src/client/visualization.tsx',
+        dataExplorer: './src/client/dataExplorer.tsx',
+        sanddance: './src/client/sanddance.tsx'
     },
     output: {
-        path: path.join(constants.ExtensionRootDir, 'out', 'client_renderer'),
+        path: path.join(constants.ExtensionRootDir, 'out', 'renderer'),
         filename: '[name].js',
         chunkFilename: `[name].bundle.js`
     },
@@ -47,6 +49,18 @@ module.exports = {
     module: {
         rules: [
             {
+                test: /\.js$/,
+                include: /node_modules.*remark.*default.*js/,
+                use: [
+                    'ify-loader',
+                    'transform-loader?plotly.js/tasks/compress_attributes.js',
+                    {
+                        loader: path.resolve('./build/webpack/loaders/remarkLoader.js'),
+                        options: {}
+                    }
+                ]
+            },
+            {
                 test: /\.tsx?$/,
                 use: [
                     { loader: 'cache-loader' },
@@ -66,7 +80,8 @@ module.exports = {
                             configFile: configFileName,
                             // Faster (turn on only on CI, for dev we don't need this).
                             transpileOnly: true,
-                            reportFiles: ['src/client/**/*.{ts,tsx}']
+                            reportFiles: ['src/client/**/*.{ts,tsx}'],
+                            ignoreDiagnostics: ['TS7006']
                         }
                     }
                 ]
@@ -78,16 +93,6 @@ module.exports = {
             {
                 test: /\.css$/,
                 use: ['style-loader', 'css-loader']
-            },
-            {
-                test: /\.js$/,
-                include: /node_modules.*remark.*default.*js/,
-                use: [
-                    {
-                        loader: path.resolve('./build/webpack/loaders/remarkLoader.js'),
-                        options: {}
-                    }
-                ]
             },
             {
                 test: /\.json$/,

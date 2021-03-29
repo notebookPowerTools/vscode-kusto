@@ -2,12 +2,14 @@
 // Licensed under the MIT License.
 
 import { ExtensionContext } from 'vscode';
-import * as path from 'path';
+import { KernelProvider } from './kernel/provider';
+import { Client } from './kusto/client';
+import { registerDisposableRegistry } from './utils';
 
-export function activate(context: ExtensionContext): { rendererPath: string } {
-    return {
-        rendererPath: path.join(context.extensionPath, 'out', 'client_renderer', 'renderers.js')
-    };
+export function activate(context: ExtensionContext) {
+    KernelProvider.register();
+    Client.register(context);
+    registerDisposableRegistry(context);
 }
 
 export function deactivate(): void {

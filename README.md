@@ -1,20 +1,22 @@
-# Notebook Renderers for Visual Studio Code
+# Run Kusto Queries in Notebooks
 
-A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter) that provides renderers for outputs of [Jupyter Notebooks](https://jupyter.org/).
-For [Jupyter Notebooks](https://jupyter.org/) support please install [Jupyter extension for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter)
+A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marketplace.visualstudio.com/items?itemName=donjayamanne.kusto) that provides the ability to run Kusto queries in Notebooks.
 
-<img src=https://raw.githubusercontent.com/microsoft/vscode-notebook-renderers/main/images/sample.png>
+<img src=https://raw.githubusercontent.com/donjayamanne/vscode-kusto/main/images/main.gif>
 
-# Contributing
+# Preview
+This extension is still in preview and a very early build with a long way to go before it is ready for day to day use.
+* Please install VS Code Insiders (stable is not yet supported)
+* Ensure you have install the [Jupyter](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter) extension from the marketplace
+* Install this extension
+* Launch VS Code with the following command line `code --enable-proposed-api=donjayamanne.kusto`
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+# Authentication
+* When running a cell you'll be prompted to entre the cluster name & default database.
+* Unfortunately you'll need to authenticate every execution, unless you manually generate an auth token using the following CLI:
+    `az account get-access-token --resource https://<Cluster Name>.kusto.windows.net`
+* Please note, this is temporary and there are plans for better (persistent) authentication mechanisms.
 
-When you submit a pull request, a CLA bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
+# License
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+MIT
