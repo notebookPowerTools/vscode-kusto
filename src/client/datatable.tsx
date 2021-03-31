@@ -54,13 +54,22 @@ function createAgGridData(resultTable: KustoResultTable) {
     columnDataType.clear();
     const columns = resultTable.columns;
     for (const col of columns) {
-        gridData.columnDefs.push({
+        const columnDef: ColDef = {
             headerName: col.name || '',
             field: col.name || '',
             sortable: true,
             // type: col.type || 'string',
             filter: true
-        });
+        };
+        // If we have some JSON, then ensure we stringify it.
+        // Possible the JSON is already in string form.
+        if (col.type === 'dynamic' && col.name) {
+            columnDef.valueGetter = (param) => {
+                const cellData = param.data[col.name || ''];
+                return typeof cellData === 'string' ? cellData : JSON.stringify(cellData);
+            };
+        }
+        gridData.columnDefs.push(columnDef);
         columnDataType.set(col.name || '', col.type || '');
     }
 
@@ -90,7 +99,10 @@ function DataTable(props: { columnDefs: any; rowData: any }) {
     function onCellDoubleClicked(e: CellDoubleClickedEvent) {
         if (columnDataType.get(e.colDef.field || '') === 'dynamic' && e.colDef.field) {
             try {
-                const json = JSON.parse(e.data[e.colDef.field]);
+                const json =
+                    typeof e.data[e.colDef.field] === 'string'
+                        ? JSON.parse(e.data[e.colDef.field])
+                        : e.data[e.colDef.field];
                 console.info(`Displaying details for ${e.colDef.field}`);
                 setDetailsField(e.colDef.field);
                 setDetailsJson(json);
@@ -110,7 +122,8 @@ function DataTable(props: { columnDefs: any; rowData: any }) {
             return;
         }
         try {
-            const json = JSON.parse(e.data[detailsField]);
+            const json =
+                typeof e.data[detailsField] === 'string' ? JSON.parse(e.data[detailsField]) : e.data[detailsField];
             console.info(`Displaying details for ${detailsField}`);
             setDetailsJson(json);
         } catch (ex) {
