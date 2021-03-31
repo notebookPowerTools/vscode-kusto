@@ -19,9 +19,9 @@ const clientMap = new WeakMap<NotebookDocument, Promise<Client | undefined>>();
 let globalState: Memento | undefined;
 const clusterRegex = /cluster\(("|')\w*("|')\)/gm;
 const databaseRegex = /database\(("|')\w*("|')\)/gm;
-function getClusterAndDbFromCells(document: NotebookDocument): { cluster?: string; database?: string } | undefined {
-    let cluster: string | undefined;
-    let database: string | undefined;
+function getClusterAndDbFromDocument(document: NotebookDocument): { cluster?: string; database?: string } | undefined {
+    let cluster: string | undefined = document.metadata.custom.cluster;
+    let database: string | undefined = document.metadata.custom.database;
     for (const cell of document.cells) {
         const text = cell.document.getText();
         if (!cluster && text.indexOf('cluster(')) {
@@ -55,12 +55,11 @@ function getClusterAndDbFromCells(document: NotebookDocument): { cluster?: strin
     }
 }
 async function getClusterUri(document: NotebookDocument) {
-    const clusterNameFromDocument = getClusterAndDbFromCells(document)?.cluster;
-    const clusterName = clusterNameFromDocument || '<clusterName>';
+    const clusterName = getClusterAndDbFromDocument(document)?.cluster || `https://<clusterName>.kusto.windows.net`;
     const value = await window.showInputBox({
         ignoreFocusOut: true,
-        placeHolder: `https://${clusterName}.kusto.windows.net`,
-        value: globalState?.get(GlobalMementoKeys.lastEnteredClusterUri) || `https://${clusterName}.kusto.windows.net`,
+        placeHolder: clusterName,
+        value: clusterName || globalState?.get(GlobalMementoKeys.lastEnteredClusterUri),
         title: 'Enter Kusto Cluster Uri'
     });
     if (!value) {
@@ -69,8 +68,8 @@ async function getClusterUri(document: NotebookDocument) {
     if (globalState) {
         globalState.update(GlobalMementoKeys.lastEnteredClusterUri, value);
     }
-    if ((!clusterNameFromDocument && value) || (clusterNameFromDocument && !value.includes(clusterNameFromDocument))) {
-        updateClusterDbInNotebook(document, value);
+    if (value) {
+        await updateClusterDbInNotebook(document, value);
     }
     return value;
 }
@@ -91,11 +90,11 @@ async function updateClusterDbInNotebook(document: NotebookDocument, cluster?: s
     await workspace.applyEdit(edit);
 }
 async function getDefaultDb(document: NotebookDocument) {
-    const dbName = getClusterAndDbFromCells(document)?.database || '';
+    const dbName = getClusterAndDbFromDocument(document)?.database || '';
     const value = await window.showInputBox({
         ignoreFocusOut: true,
         placeHolder: dbName,
-        value: globalState?.get(GlobalMementoKeys.lastEnteredDatabase) || dbName,
+        value: dbName || globalState?.get(GlobalMementoKeys.lastEnteredDatabase),
         title: 'Enter Default Database'
     });
     if (!value) {
@@ -104,8 +103,8 @@ async function getDefaultDb(document: NotebookDocument) {
     if (globalState) {
         globalState.update(GlobalMementoKeys.lastEnteredDatabase, value);
     }
-    if ((!dbName && value) || (dbName && value !== dbName)) {
-        updateClusterDbInNotebook(document, undefined, value);
+    if (value) {
+        await updateClusterDbInNotebook(document, undefined, value);
     }
     return value;
 }
