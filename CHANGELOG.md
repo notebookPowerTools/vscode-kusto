@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.0.2 (30 March 2021)
+### Enhancements
+
+1. Better data table viewer
+1. Improved authentication (using VS Code's built-in authentication)
+1. Using a custom notebook file (no longer using `*.ipynb`, now using `*.knb`)
+
+
+## 0.0.1 (29 March 2021)
+Initial release
+
 ### Thanks
 
 Thanks to the following projects which we fully rely on to provide some of

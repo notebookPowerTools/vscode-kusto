@@ -10,7 +10,7 @@ A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marke
 * Ensure you have install the [Kusto extensions pack](https://marketplace.visualstudio.com/items?itemName=rosshamish.kuskus-extensions-pack) from the marketplace
 * Install this extension
 * Launch VS Code with the following command line `code --enable-proposed-api=donjayamanne.kusto`
-* Create a notebook and select the `Kusto` kernel (from the bottom right of the statusbar or use `Select Notebook Kernel`)
+* Create a file with extension `*.knb`
 
 # Preview
 This extension is still in preview and a very early build with a long way to go before it is ready for day to day use.
