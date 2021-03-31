@@ -6,8 +6,7 @@ A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marke
 
 # Getting Started
 * Please install VS Code Insiders (stable is not yet supported)
-* Ensure you have install the [Jupyter](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter) extension from the marketplace
-* Ensure you have install the [Kusto extensions pack](https://marketplace.visualstudio.com/items?itemName=rosshamish.kuskus-extensions-pack) from the marketplace
+* Install the [Kusto extensions pack](https://marketplace.visualstudio.com/items?itemName=rosshamish.kuskus-extensions-pack) from the marketplace
 * Install this extension
 * Launch VS Code with the following command line `code --enable-proposed-api=donjayamanne.kusto`
 * Create a file with extension `*.knb`
