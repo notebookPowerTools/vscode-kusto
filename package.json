@@ -2,7 +2,7 @@
     "name": "kusto",
     "displayName": "Kusto Notebooks",
     "description": "Kusto Queries in Notebooks",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "engines": {
         "vscode": "^1.55.0"
     },
@@ -36,14 +36,22 @@
         "Notebooks",
         "Visualization"
     ],
-    "extensionDependencies": [
-		"ms-toolsai.jupyter"
-	],
-	"activationEvents": [
-		"onNotebook:jupyter-notebook"
-	],
+    "activationEvents": [
+        "onNotebook:kusto-notebook"
+    ],
     "main": "./out/extension/index.js",
     "contributes": {
+        "notebookProvider": [
+            {
+                "viewType": "kusto-notebook",
+                "displayName": "Kusto Notebook",
+                "selector": [
+                    {
+                        "filenamePattern": "*.knb"
+                    }
+                ]
+            }
+        ],
         "notebookOutputRenderer": [
             {
                 "id": "kusto-notebook-renderer-viz",
@@ -54,9 +62,9 @@
                 ]
             },
             {
-                "id": "kusto-notebook-renderer-dx",
-                "entrypoint": "./out/renderer/dataExplorer.js",
-                "displayName": "Data Explorer",
+                "id": "kusto-notebook-renderer-table",
+                "entrypoint": "./out/renderer/datatable.js",
+                "displayName": "Data Table",
                 "mimeTypes": [
                     "application/vnd.kusto.result+json",
                     "application/vnd.kusto.result.viz+json"
@@ -99,18 +107,20 @@
     "dependencies": {
         "@deck.gl/core": "^8.3.7",
         "@deck.gl/layers": "^8.3.7",
-        "@msrvida/sanddance-explorer": "^3",
-        "@luma.gl/core": "^8.3.1",
         "@fluentui/react": "^7.150.0",
-        "vega": "^5.17.0",
-        "@nteract/data-explorer": "^8.2.9",
+        "@luma.gl/core": "^8.3.1",
+        "@msrvida/sanddance-explorer": "^3",
+        "ag-grid-community": "^25.1.0",
+        "ag-grid-react": "^25.1.0",
         "azure-kusto-data": "^2.1.5",
         "lodash": "^4.17.19",
         "plotly.js": "^1.58.4",
         "react": "^16.8.4",
         "react-dom": "^16.8.4",
+        "react-json-view": "^1.21.3",
         "styled-components": "^5.2.1",
-        "uuid": "^3.3.2"
+        "uuid": "^3.3.2",
+        "vega": "^5.17.0"
     },
     "devDependencies": {
         "@msrvida/fluentui-react-cdn-typings": "1",

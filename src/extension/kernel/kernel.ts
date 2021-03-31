@@ -87,8 +87,8 @@ export class Kernel implements NotebookKernel {
             const error: Error = ex;
             const data = {
                 ename: ex.message || 'Failed to execute query',
-                evalue: ex.evalue || '',
-                traceback: error.stack || format(ex)
+                evalue: ex.evalue || ex['@type'] || '',
+                traceback: [error.stack || format(ex)]
             };
 
             task.appendOutput(

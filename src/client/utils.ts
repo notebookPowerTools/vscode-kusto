@@ -16,14 +16,14 @@ export interface TabularData {
     data: Datapoint[];
 }
 
-function isDataTable(results: KustoResponseDataSet) {
+export function hasDataTable(results: KustoResponseDataSet) {
     if (results.primaryResults.length === 0) {
         return false;
     }
     return true;
 }
 export function getTabularData(results: KustoResponseDataSet): TabularData | undefined {
-    if (!isDataTable(results)) {
+    if (!hasDataTable(results)) {
         return;
     }
     const primaryTable = results.primaryResults[0];

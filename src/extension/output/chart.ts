@@ -1,4 +1,5 @@
 import { KustoResponseDataSet } from 'azure-kusto-data/source/response';
+import { NotebookCellOutput, NotebookCellOutputItem } from 'vscode';
 
 export function getChartType(results: KustoResponseDataSet): string | undefined {
     if (results.tables.length === 0) {
@@ -23,4 +24,15 @@ export function getChartType(results: KustoResponseDataSet): string | undefined 
     } catch {
         return;
     }
+}
+
+export function getCellOutput(result: KustoResponseDataSet): NotebookCellOutput {
+    const chartType = getChartType(result);
+    const outputItems: NotebookCellOutputItem[] = [];
+    if (chartType && chartType !== 'table') {
+        outputItems.push(new NotebookCellOutputItem('application/vnd.kusto.result.viz+json', result));
+    } else {
+        outputItems.push(new NotebookCellOutputItem('application/vnd.kusto.result+json', result));
+    }
+    return new NotebookCellOutput(outputItems);
 }

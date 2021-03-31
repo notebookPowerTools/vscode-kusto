@@ -14,7 +14,7 @@ module.exports = {
     context: constants.ExtensionRootDir,
     entry: {
         visualization: './src/client/visualization.tsx',
-        dataExplorer: './src/client/dataExplorer.tsx',
+        datatable: './src/client/datatable.tsx',
         sanddance: './src/client/sanddance.tsx'
     },
     output: {

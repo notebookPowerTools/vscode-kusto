@@ -7,6 +7,6 @@ export class KernelProvider implements NotebookKernelProvider {
     }
 
     public static register() {
-        notebook.registerNotebookKernelProvider({ filenamePattern: '*.ipynb' }, new KernelProvider());
+        notebook.registerNotebookKernelProvider({ filenamePattern: '*.knb' }, new KernelProvider());
     }
 }

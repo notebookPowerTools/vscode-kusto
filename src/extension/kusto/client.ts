@@ -1,6 +1,15 @@
 import KustoClient from 'azure-kusto-data/source/client';
 import { KustoResponseDataSet } from 'azure-kusto-data/source/response';
-import { ExtensionContext, Memento, notebook, NotebookDocument, window } from 'vscode';
+import {
+    authentication,
+    ExtensionContext,
+    Memento,
+    notebook,
+    NotebookDocument,
+    window,
+    workspace,
+    WorkspaceEdit
+} from 'vscode';
 import { GlobalMementoKeys } from '../constants';
 import { IDisposable } from '../types';
 import { disposeAllDisposables, registerDisposable } from '../utils';
@@ -8,12 +17,50 @@ import { getClient } from './connectionProvider';
 
 const clientMap = new WeakMap<NotebookDocument, Promise<Client | undefined>>();
 let globalState: Memento | undefined;
-
-async function getClusterUri() {
+const clusterRegex = /cluster\(("|')\w*("|')\)/gm;
+const databaseRegex = /database\(("|')\w*("|')\)/gm;
+function getClusterAndDbFromCells(document: NotebookDocument): { cluster?: string; database?: string } | undefined {
+    let cluster: string | undefined;
+    let database: string | undefined;
+    for (const cell of document.cells) {
+        const text = cell.document.getText();
+        if (!cluster && text.indexOf('cluster(')) {
+            const matches = text.match(clusterRegex);
+            if (Array.isArray(matches) && matches.length > 0) {
+                if (matches[0].indexOf('"')) {
+                    cluster = matches[0].split('"')[1];
+                }
+                if (matches[0].indexOf("'")) {
+                    cluster = matches[0].split("'")[1];
+                }
+            }
+        }
+        if (!database && text.indexOf('database(')) {
+            const matches = text.match(databaseRegex);
+            if (Array.isArray(matches) && matches.length > 0) {
+                if (matches[0].indexOf('"')) {
+                    database = matches[0].split('"')[1];
+                }
+                if (matches[0].indexOf("'")) {
+                    database = matches[0].split("'")[1];
+                }
+            }
+        }
+        if (cluster && database) {
+            break;
+        }
+    }
+    if (cluster || database) {
+        return { cluster, database };
+    }
+}
+async function getClusterUri(document: NotebookDocument) {
+    const clusterNameFromDocument = getClusterAndDbFromCells(document)?.cluster;
+    const clusterName = clusterNameFromDocument || '<clusterName>';
     const value = await window.showInputBox({
         ignoreFocusOut: true,
-        placeHolder: 'https://<clusterName>.kusto.windows.net',
-        value: globalState?.get(GlobalMementoKeys.lastEnteredClusterUri) || 'https://<clusterName>.kusto.windows.net',
+        placeHolder: `https://${clusterName}.kusto.windows.net`,
+        value: globalState?.get(GlobalMementoKeys.lastEnteredClusterUri) || `https://${clusterName}.kusto.windows.net`,
         title: 'Enter Kusto Cluster Uri'
     });
     if (!value) {
@@ -22,13 +69,33 @@ async function getClusterUri() {
     if (globalState) {
         globalState.update(GlobalMementoKeys.lastEnteredClusterUri, value);
     }
+    if ((!clusterNameFromDocument && value) || (clusterNameFromDocument && !value.includes(clusterNameFromDocument))) {
+        updateClusterDbInNotebook(document, value);
+    }
     return value;
 }
-async function getDefaultDb() {
+async function updateClusterDbInNotebook(document: NotebookDocument, cluster?: string, database?: string) {
+    if (!document.metadata.editable) {
+        return;
+    }
+    const edit = new WorkspaceEdit();
+    const custom = JSON.parse(JSON.stringify(document.metadata.custom)) || {};
+    if (cluster) {
+        custom.cluster = cluster;
+    }
+    if (database) {
+        custom.database = database;
+    }
+    const newMetadata = document.metadata.with({ custom });
+    edit.replaceNotebookMetadata(document.uri, newMetadata);
+    await workspace.applyEdit(edit);
+}
+async function getDefaultDb(document: NotebookDocument) {
+    const dbName = getClusterAndDbFromCells(document)?.database || '';
     const value = await window.showInputBox({
         ignoreFocusOut: true,
-        placeHolder: '',
-        value: globalState?.get(GlobalMementoKeys.lastEnteredDatabase) || '',
+        placeHolder: dbName,
+        value: globalState?.get(GlobalMementoKeys.lastEnteredDatabase) || dbName,
         title: 'Enter Default Database'
     });
     if (!value) {
@@ -37,9 +104,18 @@ async function getDefaultDb() {
     if (globalState) {
         globalState.update(GlobalMementoKeys.lastEnteredDatabase, value);
     }
+    if ((!dbName && value) || (dbName && value !== dbName)) {
+        updateClusterDbInNotebook(document, undefined, value);
+    }
     return value;
 }
-function getAccessToken() {
+async function getAccessToken() {
+    const scopes = ['https://management.core.windows.net/.default', 'offline_access'];
+
+    const session = await authentication.getSession('microsoft', scopes, { createIfNone: true });
+    if (session?.accessToken) {
+        return session.accessToken;
+    }
     return window.showInputBox({
         ignoreFocusOut: true,
         placeHolder: '',
@@ -49,12 +125,14 @@ function getAccessToken() {
 export class Client implements IDisposable {
     private readonly disposables: IDisposable[] = [];
     private readonly client: KustoClient;
+    public readonly hasAccessToken: boolean;
     constructor(
         private readonly document: NotebookDocument,
         clusterUri: string,
         private readonly db: string,
         accessToken?: string
     ) {
+        this.hasAccessToken = (accessToken || '').length > 0;
         this.client = getClient(clusterUri, accessToken);
         this.addHandlers();
         registerDisposable(this);
@@ -70,11 +148,11 @@ export class Client implements IDisposable {
 
         // eslint-disable-next-line no-async-promise-executor
         const promise = new Promise<Client | undefined>(async (resolve) => {
-            const clusterUri = await getClusterUri();
+            const clusterUri = await getClusterUri(document);
             if (!clusterUri) {
                 return resolve(undefined);
             }
-            const defaultDb = await getDefaultDb();
+            const defaultDb = await getDefaultDb(document);
             if (!defaultDb) {
                 return resolve(undefined);
             }
@@ -98,6 +176,10 @@ export class Client implements IDisposable {
         return promise;
     }
     public async execute(query: string): Promise<KustoResponseDataSet> {
+        if (!this.hasAccessToken) {
+            // Ask for access token again (dirty hack until authentication is fixed).
+            clientMap.delete(this.document);
+        }
         return this.client.execute(this.db, query);
     }
     private addHandlers() {

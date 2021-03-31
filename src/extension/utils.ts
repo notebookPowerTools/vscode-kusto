@@ -1,4 +1,4 @@
-import { CancellationToken, ExtensionContext } from 'vscode';
+import { CancellationToken, ExtensionContext, Uri } from 'vscode';
 import { IDisposable } from './types';
 
 const disposables: IDisposable[] = [];
@@ -25,7 +25,7 @@ export function registerDisposable(disposable: IDisposable) {
     disposables.push(disposable);
 }
 
-export function debug(message: string, args: [] = []) {
+export function debug(message: string, ...args: unknown[]) {
     console.debug(message, ...args);
 }
 
@@ -119,4 +119,8 @@ export function createPromiseFromToken<T>(
 
         registerDisposable(disposable);
     });
+}
+
+export function isUntitledFile(file?: Uri) {
+    return file?.scheme === 'untitled';
 }
