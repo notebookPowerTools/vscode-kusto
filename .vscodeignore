@@ -4,6 +4,8 @@
 build/**
 out/test/**
 out/**/*.map
+out/**/*.stats.json
+out/**/*..analyzer.html
 src/**
 .gitignore
 node_modules

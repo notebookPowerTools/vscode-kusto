@@ -4,8 +4,11 @@
 ### Enhancements
 
 1. Better data table viewer
+1. Support for time series and scatter charts.
+1. Support for viewing nested json.
 1. Improved authentication (using VS Code's built-in authentication)
 1. Using a custom notebook file (no longer using `*.ipynb`, now using `*.knb`)
+1. Storing cluster and database information in the notebook metadata.
 
 
 ## 0.0.1 (29 March 2021)
