@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.5 (1 April 2021)
+### Enhancements
+
+1. Support for language features in Kusto Notebooks (refactor, code completion, formatting, etc)
+1. Support for language features in Jupyter Notebooks when using [kqlmagic](https://pypi.org/project/Kqlmagic/)
+1. Kust panel, with access to clusters, databases & related information.
+1. Improved getting started experience for Notebooks (configuring cluster/database).
+
 ## 0.0.2 (30 March 2021)
 ### Enhancements
 
