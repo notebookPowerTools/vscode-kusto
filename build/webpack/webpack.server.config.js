@@ -13,7 +13,7 @@ module.exports = {
         extension: './src/server/server.ts'
     },
     output: {
-        filename: 'index.js',
+        filename: 'server.js',
         path: path.resolve(constants.ExtensionRootDir, 'out', 'server'),
         libraryTarget: 'commonjs2',
         devtoolModuleFilenameTemplate: '../../[resource-path]'

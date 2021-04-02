@@ -1,7 +1,7 @@
 {
     "name": "kusto",
-    "displayName": "Kusto Notebooks",
-    "description": "Kusto Queries in Notebooks",
+    "displayName": "Kusto",
+    "description": "Run Kusto Queries in VS Code",
     "version": "0.1.0",
     "engines": {
         "vscode": "^1.55.0"
@@ -197,7 +197,7 @@
         "compile:server:watch": "tsc -p src/server --watch",
         "compile:test": "tsc -p src/test",
         "compile:test:watch": "tsc -p src/test --watch",
-        "compile:webpack": "npm run build:client && npm run build:extension",
+        "compile:webpack": "npm run build:client && npm run build:extension && npm run build:server",
         "compile:client": "webpack --config=build/webpack/webpack.client.config.js",
         "build:client": "webpack --config=build/webpack/webpack.client.config.js --mode=production",
         "build:server": "webpack --config=build/webpack/webpack.server.config.js --mode=production",
