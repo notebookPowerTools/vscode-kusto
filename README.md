@@ -11,6 +11,7 @@ A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marke
 * Syntax highlighting
 * Code refactoring
 * Code formatting
+* Kusto panel with access to Clusters, Databases, Tables, etc
 
 # Works with Jupyter Notebooks as well (when using [kqlmagic](https://pypi.org/project/Kqlmagic/))
 * This extension augments Jupyter Notbooks with Kusto language features, when using the [Jupyter](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter) extension.
@@ -21,6 +22,7 @@ A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marke
 * Install this extension
 * Launch VS Code with the following command line `code-insiders --enable-proposed-api=donjayamanne.kusto`
 * Create a file with extension `*.knb`
+* Use the command `Configure Kusto Cluster/Database for Notebooks` to configure the Kusto connection.
 
 # Difference between Kusto Notebooks & Jupyter Notebooks  (with [kqlmagic](https://pypi.org/project/Kqlmagic/))
 * Kusto Notebooks, there are no additional dependencies.
@@ -40,6 +42,8 @@ This extension is still in preview and a very early build with a long way to go 
 # Roadmap
 * Support for more charts
 * Ability to lock cells (preserve the results and ensure its never lost)
+* Support for plain text files (*.csl/*.kql)
+* & more...
 
 # License
 

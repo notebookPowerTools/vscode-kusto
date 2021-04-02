@@ -50,8 +50,13 @@ async function ensureNotebookHasClusterDbInfoInternal(document: NotebookDocument
     }
     await updateClusterDbInNotebook(document, info);
 }
-async function onChangeNotebookDatabase(uri: Uri) {
-    const document = notebook.notebookDocuments.find((item) => item.uri.toString() === uri.toString());
+async function onChangeNotebookDatabase(uri?: Uri) {
+    uri = uri || window.activeNotebookEditor?.document.uri;
+    if (!uri) {
+        return;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const document = notebook.notebookDocuments.find((item) => item.uri.toString() === uri!.toString());
     if (!document) {
         return;
     }
