@@ -38,15 +38,22 @@
     ],
     "activationEvents": [
         "onNotebook:kusto-notebook",
+        "onNotebook:jupyter-notebook",
         "onLanguage:plaintext",
-        "onView:kustoExplorer"
+        "onView:kustoExplorer",
+        "onCommand:kusto.addCluster",
+        "onCommand:kusto.removeCluster",
+        "onCommand:kusto.refreshNode",
+        "onCommand:kusto.changeNotebookDatabase"
     ],
     "main": "./out/extension/index.js",
     "contributes": {
         "commands": [
             {
-                "command": "languageServerExample.startStreaming",
-                "title": "Kussto Language Server"
+                "command": "kusto.changeNotebookDatabase",
+                "title": "Configure Kusto Cluster & Database for Notebooks",
+                "category": "Notebook",
+                "icon": "$(database)"
             },
             {
                 "command": "kusto.addCluster",
@@ -62,11 +69,6 @@
                 "command": "kusto.refreshNode",
                 "title": "Refresh",
                 "icon": "$(refresh)"
-            },
-            {
-                "command": "kusto.changeNotebookDatabase",
-                "title": "Configure Kusto Notebook Cluster/Datbase Connection",
-                "icon": "$(database)"
             }
         ],
         "languages": [
@@ -92,25 +94,43 @@
             }
         ],
         "viewsContainers": {
-			"activitybar": [
-				{
-					"id": "kusto-explorer",
-					"title": "Kusto",
-					"icon": "resources/icons/kusto.svg"
-				}
-			]
-		},
-		"views": {
-			"kusto-explorer": [
-				{
-					"id": "kustoExplorer",
-					"name": "Clusters",
-					"icon": "resources/icons/kusto.svg",
-					"contextualTitle": "Kusto Clusters"
-				}
-			]
-		},
+            "activitybar": [
+                {
+                    "id": "kusto-explorer",
+                    "title": "Kusto",
+                    "icon": "resources/icons/kusto.svg"
+                }
+            ]
+        },
+        "views": {
+            "kusto-explorer": [
+                {
+                    "id": "kustoExplorer",
+                    "name": "Clusters",
+                    "icon": "resources/icons/kusto.svg",
+                    "contextualTitle": "Kusto Clusters"
+                }
+            ]
+        },
         "menus": {
+            "commandPalette": [
+                {
+                    "command": "kusto.changeNotebookDatabase",
+                    "when": "notebookViewType == kusto-notebook"
+                },
+                {
+                    "command": "kusto.addCluster",
+                    "when": "config.noExists"
+                },
+                {
+                    "command": "kusto.removeCluster",
+                    "when": "config.noExists"
+                },
+                {
+                    "command": "kusto.refreshNode",
+                    "when": "config.noExists"
+                }
+            ],
             "view/title": [
                 {
                     "command": "kusto.addCluster",
@@ -126,7 +146,7 @@
             "editor/title": [
                 {
                     "command": "kusto.changeNotebookDatabase",
-                    "when": "notebookViewType == 'kusto-notebook'",
+                    "when": "notebookViewType == kusto-notebook",
                     "group": "navigation@1"
                 }
             ],

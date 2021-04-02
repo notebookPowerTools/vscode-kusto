@@ -1,8 +1,9 @@
 import * as path from 'path';
-import { commands, ExtensionContext, notebook, NotebookDocument, window, workspace } from 'vscode';
+import { ExtensionContext, notebook, NotebookDocument, window } from 'vscode';
 import { LanguageClientOptions } from 'vscode-languageclient';
 import { LanguageClient, ServerOptions, State, TransportKind } from 'vscode-languageclient/node';
 import { addDocumentConnectionHandler, getClusterAndDbFromDocumentMetadata } from '../kernel/notebookConnection';
+import { isJupyterNotebook, isKustoNotebook } from '../kernel/provider';
 import { EngineSchema } from '../kusto/schema';
 import { getClusterSchema } from '../kusto/schemas';
 import { debug, registerDisposable } from '../utils';
@@ -10,23 +11,6 @@ import { debug, registerDisposable } from '../utils';
 let client: LanguageClient;
 let clientState: State | undefined;
 export async function initialize(context: ExtensionContext) {
-    commands.registerCommand('languageServerExample.startStreaming', async () => {
-        // Establish websocket connection
-        const activeNbUri = window.activeNotebookEditor?.document;
-        if (!activeNbUri) {
-            return;
-        }
-        const engineSchema = await getClusterSchema('https://ddtelvscode.kusto.windows.net/', true);
-        const clone: EngineSchema = JSON.parse(JSON.stringify(engineSchema));
-        clone.database = engineSchema.cluster.databases.find(
-            (item) => item.name.toLowerCase() === 'VSCodeExt'.toLowerCase()
-        );
-        client.sendNotification('setSchema', {
-            uri: activeNbUri.cells[0].document.uri.toString(),
-            engineSchema: clone
-        });
-    });
-
     startLanguageServer(context);
     // When a notebook is opened, fetch the schema & send it.
     registerDisposable(notebook.onDidOpenNotebookDocument(sendSchemaForDocument));
@@ -57,10 +41,6 @@ function startLanguageServer(context: ExtensionContext) {
     const clientOptions: LanguageClientOptions = {
         // Register the server for plain text documents
         documentSelector: [{ language: 'kusto' }],
-        synchronize: {
-            // Notify the server about file changes to '.clientrc files contained in the workspace
-            fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
-        },
         // Hijacks all LSP logs and redirect them to a specific port through WebSocket connection
         outputChannel: window.createOutputChannel('Kusto Language Server')
     };
@@ -84,6 +64,9 @@ function startLanguageServer(context: ExtensionContext) {
 const lastSentClusterDbForDocument = new WeakMap<NotebookDocument, EngineSchema>();
 const pendingSchemas = new Map<string, EngineSchema>();
 async function sendSchemaForDocument(document: NotebookDocument) {
+    if (!isKustoNotebook(document) && !isJupyterNotebook(document)) {
+        return;
+    }
     const info = getClusterAndDbFromDocumentMetadata(document);
     if (!info.cluster || !info.database || !shouldSendSchemaToLanguageServer(document, info)) {
         return;

@@ -10,6 +10,7 @@ import { initializeCache } from './cache';
 import { ClusterTreeView } from './activityBar/clusterView';
 import { registerNotebookConnection } from './kernel/notebookConnection';
 import { initialize } from './languageServer';
+import { monitorJupyterCells } from './languageServer/jupyterNotebook';
 
 let client: LanguageClient;
 
@@ -23,6 +24,7 @@ export function activate(context: ExtensionContext) {
     ClusterTreeView.register();
     registerNotebookConnection();
     initialize(context);
+    monitorJupyterCells();
 }
 
 export async function deactivate(): Promise<void> {

@@ -10,3 +10,10 @@ export class KernelProvider implements NotebookKernelProvider {
         notebook.registerNotebookKernelProvider({ filenamePattern: '*.knb' }, new KernelProvider());
     }
 }
+
+export function isJupyterNotebook(document: NotebookDocument) {
+    return document.viewType === 'jupyter-notebook';
+}
+export function isKustoNotebook(document: NotebookDocument) {
+    return document.viewType === 'kusto-notebook';
+}

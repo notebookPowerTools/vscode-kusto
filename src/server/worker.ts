@@ -15,7 +15,7 @@ import {
     TextEdit,
     WorkspaceEdit
 } from 'vscode-languageserver';
-import type { TextDocument } from 'vscode-languageserver-textdocument';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 import { EngineSchema } from './schema';
 import { getNotebookUri } from './utils';
 
@@ -41,28 +41,71 @@ export async function setDocumentEngineSchema(uri: string, engineSchema: EngineS
     const newLs = languageService.createLanguageService(engineSchema);
     languageServersPerEngineSchemaAndDefaultDb.set(id, newLs);
 }
+function isJupyterNotebook(document: TextDocument) {
+    if (document.uri.toLowerCase().includes('.knb') && !document.uri.toLowerCase().includes('.ipynb')) {
+        return false;
+    }
+    const uri = getNotebookUri(document);
+    return uri.fsPath.toLowerCase().endsWith('.ipynb');
+}
+function isAJupyterCellThatCanBeIgnored(document: TextDocument) {
+    if (!isJupyterNotebook(document)) {
+        return false;
+    }
+    if (document.lineCount > 1) {
+        return false;
+    }
+    const text = document.getText();
+    // Ignore some single line kql commands.
+    if (
+        text.startsWith('%kql') &&
+        (text.includes('--version') || text.includes('--help') || text.toLowerCase().includes('azuredataexplorer'))
+    ) {
+        return true;
+    }
+    return false;
+}
+function fixJupyterNotebook(document: TextDocument): TextDocument {
+    if (isJupyterNotebook(document)) {
+        const text = document.getText().replace('%%kql', '//kql').replace('%kql ', '     ');
+        return TextDocument.create(document.uri.toString(), 'kusto', document.version, text);
+    }
+    return document;
+}
 export async function getCompletions(document: TextDocument, position: Position): Promise<CompletionList> {
     const ls = getLanguageServer(document);
-    return ls.doComplete(document, Position.create(position.line, position.character));
+    if (isAJupyterCellThatCanBeIgnored(document)) {
+        return { isIncomplete: false, items: [] };
+    }
+    return ls.doComplete(fixJupyterNotebook(document), Position.create(position.line, position.character));
 }
 export async function getValidations(
     document: TextDocument,
     intervals: { start: number; end: number }[]
 ): Promise<Diagnostic[]> {
     const ls = getLanguageServer(document);
-    return ls.doValidation(document, intervals);
+    if (isAJupyterCellThatCanBeIgnored(document)) {
+        return [];
+    }
+    return ls.doValidation(fixJupyterNotebook(document), intervals);
 }
 export async function doHover(document: TextDocument, position: Position): Promise<Hover | undefined> {
     const ls = getLanguageServer(document);
-    return ls.doHover(document, position);
+    return ls.doHover(fixJupyterNotebook(document), position);
 }
 export async function doDocumentFormat(document: TextDocument): Promise<TextEdit[]> {
     const ls = getLanguageServer(document);
-    return ls.doDocumentFormat(document);
+    if (isAJupyterCellThatCanBeIgnored(document)) {
+        return [];
+    }
+    return ls.doDocumentFormat(fixJupyterNotebook(document));
 }
 export async function doRangeFormat(document: TextDocument, range: Range): Promise<TextEdit[]> {
     const ls = getLanguageServer(document);
-    return ls.doRangeFormat(document, range);
+    if (isAJupyterCellThatCanBeIgnored(document)) {
+        return [];
+    }
+    return ls.doRangeFormat(fixJupyterNotebook(document), range);
 }
 export async function doRename(
     document: TextDocument,
@@ -70,11 +113,14 @@ export async function doRename(
     newName: string
 ): Promise<WorkspaceEdit | undefined> {
     const ls = getLanguageServer(document);
-    return ls.doRename(document, position, newName);
+    if (isAJupyterCellThatCanBeIgnored(document)) {
+        return;
+    }
+    return ls.doRename(fixJupyterNotebook(document), position, newName);
 }
 export async function doFolding(document: TextDocument): Promise<FoldingRange[]> {
     const ls = getLanguageServer(document);
-    return ls.doFolding(document);
+    return ls.doFolding(fixJupyterNotebook(document));
 }
 
 export function disposeAllLanguageServers() {
