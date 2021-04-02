@@ -1,6 +1,3 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
 const path = require('path');
 const constants = require('../constants');
 const common = require('./common');

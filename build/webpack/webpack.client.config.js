@@ -1,6 +1,3 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
 const common = require('./common');
 const FixDefaultImportPlugin = require('webpack-fix-default-import-plugin');
 const path = require('path');

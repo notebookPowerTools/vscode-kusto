@@ -1,6 +1,3 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
 // This must be on top, do not change. Required by webpack.
 // eslint-disable-next-line no-unused-vars
 declare let __webpack_public_path__: string;

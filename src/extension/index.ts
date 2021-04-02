@@ -1,6 +1,3 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
 import { ContentProvider } from './content/provider';
 import { KernelProvider } from './kernel/provider';
 import { registerDisposableRegistry } from './utils';
