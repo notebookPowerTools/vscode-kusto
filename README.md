@@ -1,4 +1,4 @@
-# Run Kusto Queries in Notebooks
+# Kusto in Notebooks
 
 A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marketplace.visualstudio.com/items?itemName=donjayamanne.kusto) that provides the ability to run Kusto queries in Notebooks.
 
