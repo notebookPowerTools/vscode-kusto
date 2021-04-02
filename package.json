@@ -37,10 +37,12 @@
         "Visualization"
     ],
     "activationEvents": [
+        "onLanguage:kusto",
         "onNotebook:kusto-notebook",
         "onNotebook:jupyter-notebook",
         "onLanguage:plaintext",
         "onView:kustoExplorer",
+        "onCommand:kusto.executeSelectedQuery",
         "onCommand:kusto.addCluster",
         "onCommand:kusto.removeCluster",
         "onCommand:kusto.refreshNode",
@@ -53,6 +55,12 @@
                 "command": "kusto.createNotebook",
                 "title": "Configure Kusto Notebooks",
                 "category": "Notebook",
+                "icon": "$(notebook)"
+            },
+            {
+                "command": "kusto.executeSelectedQuery",
+                "title": "Execute Selected Query",
+                "category": "Kusto",
                 "icon": "$(notebook)"
             },
             {
@@ -118,11 +126,22 @@
                 }
             ]
         },
+        "keybindings": [
+            {
+                "command": "kusto.executeSelectedQuery",
+                "key": "shift+enter",
+                "when": "editorTextFocus && editorLangId == kusto && !findInputFocussed && !replaceInputFocussed && !notebookEditorFocused"
+            }
+        ],
         "menus": {
             "commandPalette": [
                 {
                     "command": "kusto.changeNotebookDatabase",
                     "when": "notebookViewType == kusto-notebook"
+                },
+                {
+                    "command": "kusto.executeSelectedQuery",
+                    "when": "editorLangId == kusto"
                 },
                 {
                     "command": "kusto.addCluster",
@@ -158,6 +177,18 @@
                     "command": "kusto.changeNotebookDatabase",
                     "when": "notebookViewType == kusto-notebook",
                     "group": "navigation@1"
+                },
+                {
+                    "command": "kusto.changeNotebookDatabase",
+                    "when": "editorLangId == kusto",
+                    "group": "navigation@1"
+                }
+            ],
+            "editor/context": [
+                {
+                    "command": "kusto.executeSelectedQuery",
+                    "group": "Kusto",
+                    "when": "editorFocus && editorLangId == kusto && !notebookEditorFocused"
                 }
             ],
             "view/item/context": [
@@ -200,6 +231,15 @@
                 "selector": [
                     {
                         "filenamePattern": "*.knb"
+                    }
+                ]
+            },
+            {
+                "viewType": "kusto-interactive",
+                "displayName": "Kusto Interactive",
+                "selector": [
+                    {
+                        "filenamePattern": "*.knb-interactive"
                     }
                 ]
             }
