@@ -76,6 +76,12 @@ export class Kernel implements NotebookKernel {
             });
 
             const chartType = getChartType(results);
+            // Dump the primary results table from the list of tables.
+            // We already have that information as a seprate property name `primaryResults`.
+            // This will reduce the amount of JSON (save) in knb file.
+            results.tables = results.tables.filter((item) => item.name !== 'PrimaryResult');
+            results.tableNames = results.tableNames.filter((item) => item !== 'PrimaryResult');
+
             const outputItems: NotebookCellOutputItem[] = [];
             if (chartType && chartType !== 'table') {
                 outputItems.push(new NotebookCellOutputItem('application/vnd.kusto.result.viz+json', results));

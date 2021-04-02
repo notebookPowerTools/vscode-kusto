@@ -19,6 +19,16 @@
             ],
             "preLaunchTask": "${defaultBuildTask}"
         },
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "Attach to Server",
+			"address": "localhost",
+			"protocol": "inspector",
+			"port": 6012,
+			"sourceMaps": true,
+			"outFiles": ["${workspaceRoot}/out/server/**/*.js"]
+		},
         {
             "name": "Extension Tests",
             "type": "extensionHost",

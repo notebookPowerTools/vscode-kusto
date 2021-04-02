@@ -5,6 +5,9 @@
             "path": "./src/client"
         },
         {
+            "path": "./src/server"
+        },
+        {
             "path": "./src/extension"
         },
         {
