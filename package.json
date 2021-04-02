@@ -1,7 +1,7 @@
 {
     "name": "kusto",
-    "displayName": "Kusto",
-    "description": "Run Kusto Queries in VS Code",
+    "displayName": "Kusto Notebooks",
+    "description": "Run Kusto Queries in Notebooks",
     "version": "0.1.0",
     "engines": {
         "vscode": "^1.55.0"
@@ -74,7 +74,12 @@
                 "id": "kusto",
                 "aliases": [
                     "Kusto",
-                    "kusto"
+                    "kusto",
+                    "kql",
+                    "csl"
+                ],
+                "extensions": [
+                    ".knb"
                 ],
                 "configuration": "./language-configuration.json"
             }
@@ -91,7 +96,7 @@
 				{
 					"id": "kusto-explorer",
 					"title": "Kusto",
-					"icon": "resources/icons/activity.svg"
+					"icon": "resources/icons/kusto.svg"
 				}
 			]
 		},
@@ -100,7 +105,7 @@
 				{
 					"id": "kustoExplorer",
 					"name": "Clusters",
-					"icon": "resources/icons/activity.svg",
+					"icon": "resources/icons/kusto.svg",
 					"contextualTitle": "Kusto Clusters"
 				}
 			]

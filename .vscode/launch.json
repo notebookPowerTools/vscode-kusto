@@ -17,7 +17,7 @@
             "outFiles": [
                 "${workspaceFolder}/out/**/*.js"
             ],
-            "preLaunchTask": "${defaultBuildTask}"
+            // "preLaunchTask": "${defaultBuildTask}"
         },
 		{
 			"type": "node",
