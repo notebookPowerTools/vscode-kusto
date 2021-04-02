@@ -21,3 +21,5 @@ export type DeepReadonly<T> = T extends (infer R)[]
     T extends object
     ? DeepReadonlyObject<T>
     : T;
+
+export type Connection = { cluster: string; database: string };

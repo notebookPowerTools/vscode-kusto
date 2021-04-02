@@ -1,6 +1,8 @@
+import * as path from 'path';
 import { KustoResponseDataSet } from 'azure-kusto-data/source/response';
 import {
     CancellationToken,
+    commands,
     notebook,
     NotebookCellData,
     NotebookCellKind,
@@ -17,8 +19,10 @@ import {
     Uri,
     workspace
 } from 'vscode';
+import { isKustoNotebook } from '../kernel/provider';
 import { getCellOutput } from '../output/chart';
 import { debug, isUntitledFile, registerDisposable } from '../utils';
+import { Connection } from '../types';
 
 type KustoCellMetadata = {
     locked?: boolean;
@@ -62,10 +66,16 @@ export class ContentProvider implements NotebookContentProvider {
         openContext: NotebookDocumentOpenContext,
         _token: CancellationToken
     ): Promise<NotebookData> {
-        const buffer = openContext.untitledDocumentData || (await workspace.fs.readFile(uri));
-        let notebook: KustoNotebook = { cells: [] };
         try {
-            notebook = JSON.parse(Buffer.from(buffer).toString('utf8'));
+            let notebook: KustoNotebook = { cells: [] };
+            if (isUntitledFile(uri) && contentsForNextUntitledFile.has(uri.fsPath)) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                notebook = contentsForNextUntitledFile.get(uri.fsPath)!;
+                contentsForNextUntitledFile.delete(uri.fsPath);
+            } else {
+                const buffer = openContext.untitledDocumentData || (await workspace.fs.readFile(uri));
+                notebook = JSON.parse(Buffer.from(buffer).toString('utf8'));
+            }
             const cells = notebook.cells.map((item) => {
                 const outputs: NotebookCellOutput[] = item.outputs.map(getCellOutput);
                 const locked = item.metadata?.locked === true;
@@ -174,4 +184,34 @@ export class ContentProvider implements NotebookContentProvider {
         const content = Buffer.from(JSON.stringify(notebook, undefined, 4));
         await workspace.fs.writeFile(uri, content);
     }
+}
+
+const contentsForNextUntitledFile = new Map<string, KustoNotebook>();
+export async function createUntitledNotebook(connection: Connection, cellText?: string) {
+    const name = `${createUntitledFileName()}.knb`;
+    const uri = Uri.file(name).with({ scheme: 'untitled', path: name });
+    const contents: KustoNotebook = {
+        cells: cellText ? [{ kind: 'code', source: cellText, outputs: [] }] : [],
+        metadata: { ...connection }
+    };
+    contentsForNextUntitledFile.set(uri.fsPath.toString(), contents);
+    await commands.executeCommand('vscode.openWith', uri, 'kusto-notebook');
+}
+
+function createUntitledFileName() {
+    const untitledNumbers = new Set(
+        notebook.notebookDocuments
+            .filter((item) => (isKustoNotebook(item) && item.isUntitled) || isUntitledFile(item.uri))
+            .map((item) => path.basename(item.uri.fsPath.toLowerCase(), '.knb'))
+            .filter((item) => item.includes('-'))
+            .map((item) => parseInt(item.split('-')[1], 10))
+            .filter((item) => !isNaN(item))
+    );
+    for (let index = 1; index <= untitledNumbers.size + 1; index++) {
+        if (!untitledNumbers.has(index)) {
+            return `Untitled-${index}`;
+        }
+        continue;
+    }
+    return `Untitled-${untitledNumbers.size + 1}`;
 }

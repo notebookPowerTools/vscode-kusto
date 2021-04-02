@@ -2,12 +2,13 @@ import KustoClient from 'azure-kusto-data/source/client';
 import { ProgressLocation, window } from 'vscode';
 import { getFromCache, updateCache } from '../cache';
 import { GlobalMementoKeys } from '../constants';
+import { Connection } from '../types';
 import { getAccessToken, getClient } from './connectionProvider';
 import { Database, EngineSchema, Function, InputParameter, Table, TableEntityType } from './schema';
 
 const clusterSchemaPromises = new Map<string, Promise<EngineSchema>>();
-export async function getClusterSchema(clusterUri: string, ignoreCache?: boolean): Promise<EngineSchema> {
-    const key = `${GlobalMementoKeys.prefixForClusterSchema}:${clusterUri.toLowerCase()}`;
+export async function getClusterSchema(cluster: string, ignoreCache?: boolean): Promise<EngineSchema> {
+    const key = `${GlobalMementoKeys.prefixForClusterSchema}:${cluster.toLowerCase()}`;
     let promise = clusterSchemaPromises.get(key);
     if (promise && !ignoreCache) {
         return promise;
@@ -24,14 +25,14 @@ export async function getClusterSchema(clusterUri: string, ignoreCache?: boolean
             async (_progress, _token) => {
                 try {
                     const accessToken = await getAccessToken();
-                    const client = await getClient(clusterUri, accessToken);
-                    const databaseNames = await getDatabases(client, clusterUri, ignoreCache);
+                    const client = await getClient(cluster, accessToken);
+                    const databaseNames = await getDatabases(client, cluster, ignoreCache);
                     const databases = await Promise.all(
-                        databaseNames.map((db) => getDatabaseSchema(client, clusterUri, db, ignoreCache))
+                        databaseNames.map((database) => getDatabaseSchema(client, { cluster, database }, ignoreCache))
                     );
                     const engineSchema: EngineSchema = {
                         cluster: {
-                            connectionString: clusterUri,
+                            connectionString: cluster,
                             databases
                         },
                         clusterType: 'Engine',
@@ -178,11 +179,12 @@ function translateResponseFunctionToSchemaFunction(fn: FunctionSchema): Function
 }
 async function getDatabaseSchema(
     client: KustoClient,
-    clusterUri: string,
-    db: string,
+    connection: Connection,
     ignoreCache?: boolean
 ): Promise<Database> {
-    const key = `${GlobalMementoKeys.prefixForTablesInAClusterDB}:${clusterUri.toLowerCase()}:${db}`;
+    const key = `${GlobalMementoKeys.prefixForTablesInAClusterDB}:${connection.cluster.toLowerCase()}:${
+        connection.database
+    }`;
     let promise = dbSchemaPromises.get(key);
     if (promise && !ignoreCache) {
         return promise;
@@ -194,9 +196,11 @@ async function getDatabaseSchema(
 
     const fn = async () => {
         try {
-            const result = await client.execute(db, '.show database schema as json');
+            const result = await client.execute(connection.database, '.show database schema as json');
             if (result.primaryResults.length === 0 || result.primaryResults[0]._rows.length == 0) {
-                throw new Error(`Failed to query database schema for cluster ${clusterUri}:${db}`);
+                throw new Error(
+                    `Failed to query database schema for cluster ${connection.cluster}:${connection.database}`
+                );
             }
             const schema: DatabaseSchemaResponse = JSON.parse(result.primaryResults[0]._rows[0]);
             const dbSchemaResponse = Object.keys(schema.Databases).map((name) => schema.Databases[name])[0];

@@ -11,12 +11,13 @@ import { commands, notebook, NotebookDocument, ThemeIcon, Uri, workspace, Worksp
 import { getFromCache, updateCache } from '../cache';
 import { GlobalMementoKeys } from '../constants';
 import { getClusterSchema } from '../kusto/schemas';
+import { Connection } from '../types';
 import { debug, logError, registerDisposable } from '../utils';
 import { create, InputFlowAction, MultiStepInput } from './multiStepInput';
 import { isJupyterNotebook, isKustoNotebook } from './provider';
 
 const onDidChangeConnection = new EventEmitter<NotebookDocument>();
-const onDidAddCluster = new EventEmitter<string>();
+const onDidChangeCluster = new EventEmitter<{ clusterUri: string; change: 'added' | 'removed' }>();
 
 export function registerNotebookConnection() {
     registerDisposable(onDidChangeConnection);
@@ -27,8 +28,8 @@ export function registerNotebookConnection() {
 export function addDocumentConnectionHandler(cb: (document: NotebookDocument) => void) {
     registerDisposable(onDidChangeConnection.event(cb));
 }
-export function addClusterAddedHandler(cb: (clusterUri: string) => void) {
-    registerDisposable(onDidAddCluster.event(cb));
+export function addClusterAddedHandler(cb: (change: { clusterUri: string; change: 'added' | 'removed' }) => void) {
+    registerDisposable(onDidChangeCluster.event(cb));
 }
 export async function ensureNotebookHasClusterDbInfo(document: NotebookDocument) {
     await ensureNotebookHasClusterDbInfoInternal(document, false);
@@ -95,8 +96,7 @@ function triggerJupyterConnectionChanged(notebook: NotebookDocument) {
 async function captureClusterAndDatabaseFromUser(document: NotebookDocument) {
     const info = getClusterAndDbFromDocumentMetadata(document);
     const state = {
-        cluster: info.cluster,
-        database: info.database,
+        connection: info,
         dismissed: false
     };
     const multiStep = create<typeof state>();
@@ -105,11 +105,9 @@ async function captureClusterAndDatabaseFromUser(document: NotebookDocument) {
         return;
     }
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return { cluster: state.cluster!, database: state.database! };
+    return { cluster: state.connection.cluster!, database: state.connection.database! };
 }
-export function getClusterAndDbFromDocumentMetadata(
-    document: NotebookDocument
-): { cluster?: string; database?: string } {
+export function getClusterAndDbFromDocumentMetadata(document: NotebookDocument): Partial<Connection> {
     if (isJupyterNotebook(document)) {
         return getClusterAndDbFromJupyterNotebook(document);
     }
@@ -170,7 +168,7 @@ function getClusterAndDbFromJupyterNotebook(document: NotebookDocument): { clust
         return {};
     }
 }
-async function updateClusterDbInNotebook(document: NotebookDocument, info: { cluster: string; database: string }) {
+async function updateClusterDbInNotebook(document: NotebookDocument, info: Connection) {
     if (!document.metadata.editable || isJupyterNotebook(document) || !isKustoNotebook(document)) {
         return;
     }
@@ -185,13 +183,11 @@ async function updateClusterDbInNotebook(document: NotebookDocument, info: { clu
 }
 async function selectClusterUri(
     multiStepInput: MultiStepInput<{
-        cluster: string | undefined;
-        database: string | undefined;
+        connection: Partial<Connection>;
         dismissed: boolean;
     }>,
     state: {
-        cluster: string | undefined;
-        database: string | undefined;
+        connection: Partial<Connection>;
         dismissed: boolean;
     }
 ) {
@@ -219,7 +215,7 @@ async function selectClusterUri(
         // Add a new cluster.
         return addClusterUriAndSelectDb(multiStepInput, state);
     } else if ('label' in selection) {
-        state.cluster = selection.label;
+        state.connection.cluster = selection.label;
         return selectDatabase(multiStepInput, state);
     } else {
         state.dismissed = true;
@@ -227,17 +223,15 @@ async function selectClusterUri(
 }
 async function addClusterUriAndSelectDb(
     multiStepInput: MultiStepInput<{
-        cluster: string | undefined;
-        database: string | undefined;
+        connection: Partial<Connection>;
         dismissed: boolean;
     }>,
     state: {
-        cluster: string | undefined;
-        database: string | undefined;
+        connection: Partial<Connection>;
         dismissed: boolean;
     }
 ) {
-    const clusterUri = state.cluster || 'https://help.kusto.windows.net';
+    const clusterUri = state.connection.cluster || 'https://help.kusto.windows.net';
     const clusters: string[] = getFromCache<string[]>(GlobalMementoKeys.clusterUris) || [];
     const value = await multiStepInput
         .showInputBox({
@@ -261,8 +255,8 @@ async function addClusterUriAndSelectDb(
         return selectClusterUri(multiStepInput, state);
     }
     if (typeof value === 'string') {
-        state.cluster = value;
-        await updateCachedClusters(state.cluster);
+        state.connection.cluster = value;
+        await updateCachedClusters(state.connection.cluster);
         return selectDatabase(multiStepInput, state);
     }
     state.dismissed = true;
@@ -282,17 +276,15 @@ export async function addClusterUri() {
 }
 async function selectDatabase(
     multiStepInput: MultiStepInput<{
-        cluster: string | undefined;
-        database: string | undefined;
+        connection: Partial<Connection>;
         dismissed: boolean;
     }>,
     state: {
-        cluster: string | undefined;
-        database: string | undefined;
+        connection: Partial<Connection>;
         dismissed: boolean;
     }
 ) {
-    const schema = await getClusterSchema(state.cluster || '');
+    const schema = await getClusterSchema(state.connection.cluster || '');
     const quickPickItems = schema.cluster.databases.map((db) => ({ label: db.name }));
     const selection = await multiStepInput
         .showQuickPick({
@@ -315,7 +307,7 @@ async function selectDatabase(
     } else if (selection === QuickInputButtons.Back) {
         return selectClusterUri(multiStepInput, state);
     } else if ('label' in selection) {
-        state.database = selection.label;
+        state.connection.database = selection.label;
     }
 }
 
@@ -340,5 +332,12 @@ async function updateCachedClusters(clusterUri: string) {
     const items = new Set<string>(clusters);
     items.add(clusterUri);
     await updateCache(GlobalMementoKeys.clusterUris, Array.from(items));
-    onDidAddCluster.fire(clusterUri);
+    onDidChangeCluster.fire({ clusterUri, change: 'added' });
+}
+
+export async function removeCachedCluster(clusterUri: string) {
+    let clusters: string[] = getFromCache<string[]>(GlobalMementoKeys.clusterUris) || [];
+    clusters = clusters.filter((item) => item.toLowerCase() !== clusterUri.toLowerCase());
+    await updateCache(GlobalMementoKeys.clusterUris, clusters);
+    onDidChangeCluster.fire({ clusterUri, change: 'removed' });
 }
