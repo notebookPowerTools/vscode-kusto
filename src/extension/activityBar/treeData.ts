@@ -123,6 +123,14 @@ export class KustoClusterExplorer implements TreeDataProvider<ITreeData>, IDispo
     public getParent?(element: ITreeData): ITreeData | undefined {
         return element?.parent;
     }
+    public async removeCluster(clusterUri: string) {
+        const indexToRemove = this.clusters.findIndex((cluster) => cluster.clusterUri === clusterUri);
+        if (indexToRemove === -1) {
+            return;
+        }
+        this.clusters.splice(indexToRemove, 1);
+        this._onDidChangeTreeData.fire();
+    }
     public async addCluster(clusterUri: string) {
         if (this.clusters.find((cluster) => cluster.clusterUri === clusterUri)) {
             return;
@@ -139,9 +147,7 @@ export class KustoClusterExplorer implements TreeDataProvider<ITreeData>, IDispo
         }
     }
     public async refresh() {
-        const clusters = getFromCache<string[]>(GlobalMementoKeys.clusterUris) || [
-            'https://ddtelvscode.kusto.windows.net/'
-        ];
+        const clusters = getFromCache<string[]>(GlobalMementoKeys.clusterUris) || [];
         if (!Array.isArray(clusters)) {
             return;
         }
