@@ -50,6 +50,12 @@
     "contributes": {
         "commands": [
             {
+                "command": "kusto.createNotebook",
+                "title": "Configure Kusto Notebooks",
+                "category": "Notebook",
+                "icon": "$(notebook)"
+            },
+            {
                 "command": "kusto.changeNotebookDatabase",
                 "title": "Configure Kusto Cluster & Database for Notebooks",
                 "category": "Notebook",
@@ -129,6 +135,10 @@
                 {
                     "command": "kusto.refreshNode",
                     "when": "config.noExists"
+                },
+                {
+                    "command": "kusto.createNotebook",
+                    "when": "config.noExists"
                 }
             ],
             "view/title": [
@@ -168,6 +178,16 @@
                 },
                 {
                     "command": "kusto.refreshNode",
+                    "when": "view == kustoExplorer && viewItem == table",
+                    "group": "inline"
+                },
+                {
+                    "command": "kusto.createNotebook",
+                    "when": "view == kustoExplorer && viewItem == database",
+                    "group": "inline"
+                },
+                {
+                    "command": "kusto.createNotebook",
                     "when": "view == kustoExplorer && viewItem == table",
                     "group": "inline"
                 }
