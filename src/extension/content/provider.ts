@@ -19,7 +19,7 @@ import {
     Uri,
     workspace
 } from 'vscode';
-import { isKustoNotebook } from '../kernel/provider';
+import { isKustoInteractive, isKustoNotebook } from '../kernel/provider';
 import { getCellOutput } from '../output/chart';
 import { debug, isUntitledFile, registerDisposable } from '../utils';
 import { Connection } from '../types';
@@ -52,9 +52,19 @@ type KustoNotebook = {
 
 export class ContentProvider implements NotebookContentProvider {
     public static register() {
-        const disposable = notebook.registerNotebookContentProvider('kusto-notebook', new ContentProvider(), {
+        let disposable = notebook.registerNotebookContentProvider('kusto-notebook', new ContentProvider(), {
             transientOutputs: false,
             transientMetadata: {}
+        });
+        registerDisposable(disposable);
+        disposable = notebook.registerNotebookContentProvider('kusto-interactive', new ContentProvider(), {
+            transientOutputs: true,
+            transientMetadata: {
+                custom: true,
+                editable: true,
+                inputCollapsed: true,
+                outputCollapsed: true
+            }
         });
         registerDisposable(disposable);
     }
@@ -68,7 +78,9 @@ export class ContentProvider implements NotebookContentProvider {
     ): Promise<NotebookData> {
         try {
             let notebook: KustoNotebook = { cells: [] };
-            if (isUntitledFile(uri) && contentsForNextUntitledFile.has(uri.fsPath)) {
+            if (isKustoInteractive(uri)) {
+                // Do nothing.
+            } else if (isUntitledFile(uri) && contentsForNextUntitledFile.has(uri.fsPath)) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 notebook = contentsForNextUntitledFile.get(uri.fsPath)!;
                 contentsForNextUntitledFile.delete(uri.fsPath);
@@ -100,16 +112,22 @@ export class ContentProvider implements NotebookContentProvider {
             if (notebook.metadata?.cluster) {
                 custom.cluster = notebook.metadata?.cluster;
             }
-            const metadata = new NotebookDocumentMetadata().with({
+            let metadata = new NotebookDocumentMetadata().with({
                 cellEditable: !notebook.metadata?.locked,
                 cellHasExecutionOrder: false,
                 editable: !notebook.metadata?.locked,
                 trusted: true,
                 custom
             });
+            if (isKustoInteractive(uri)) {
+                metadata = new NotebookDocumentMetadata().with({
+                    cellEditable: false,
+                    cellHasExecutionOrder: false,
+                    editable: false,
+                    trusted: true
+                });
+            }
 
-            console.log(metadata);
-            console.log(cells);
             return new NotebookData(cells, metadata);
         } catch (ex) {
             if (!isUntitledFile(uri)) {

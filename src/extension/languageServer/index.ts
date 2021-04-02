@@ -1,22 +1,24 @@
 import * as path from 'path';
-import { ExtensionContext, notebook, NotebookDocument, window } from 'vscode';
+import { ExtensionContext, notebook, NotebookDocument, TextDocument, window, workspace } from 'vscode';
 import { LanguageClientOptions } from 'vscode-languageclient';
 import { LanguageClient, ServerOptions, State, TransportKind } from 'vscode-languageclient/node';
-import { addDocumentConnectionHandler, getClusterAndDbFromDocumentMetadata } from '../kernel/notebookConnection';
+import { addNotebookConnectionHandler, getClusterAndDbFromDocumentMetadata } from '../kernel/notebookConnection';
 import { isJupyterNotebook, isKustoNotebook } from '../kernel/provider';
 import { EngineSchema } from '../kusto/schema';
 import { getClusterSchema } from '../kusto/schemas';
 import { debug, registerDisposable } from '../utils';
 
 let client: LanguageClient;
-let clientState: State | undefined;
+let clientIsReady: boolean | undefined;
 export async function initialize(context: ExtensionContext) {
     startLanguageServer(context);
     // When a notebook is opened, fetch the schema & send it.
     registerDisposable(notebook.onDidOpenNotebookDocument(sendSchemaForDocument));
-    addDocumentConnectionHandler(sendSchemaForDocument);
+    registerDisposable(workspace.onDidOpenTextDocument(sendSchemaForDocument));
+    addNotebookConnectionHandler(sendSchemaForDocument);
     // Send schemas for currently opened documents as well.
     notebook.notebookDocuments.forEach(sendSchemaForDocument);
+    workspace.textDocuments.forEach(sendSchemaForDocument);
 }
 
 function startLanguageServer(context: ExtensionContext) {
@@ -48,23 +50,22 @@ function startLanguageServer(context: ExtensionContext) {
     // Create the language client and start the client.
     client = new LanguageClient('languageServerExample', 'Language Server Example', serverOptions, clientOptions);
     registerDisposable({ dispose: () => client.stop() });
-    client.onDidChangeState((e) => {
-        clientState = e.newState;
-        sendSchemaForDocuments();
+    const onDidChangeStateHandler = client.onDidChangeState((e) => {
         if (e.newState === State.Running) {
-            client.onRequest('onCustom', (msg) => {
-                console.error(msg);
-            });
+            clientIsReady = true;
+            sendSchemaForDocuments();
+            onDidChangeStateHandler.dispose();
         }
     });
+    registerDisposable(onDidChangeStateHandler);
     // Start the client. This will also launch the server
     client.start();
 }
 
-const lastSentClusterDbForDocument = new WeakMap<NotebookDocument, EngineSchema>();
+const lastSentClusterDbForDocument = new WeakMap<NotebookDocument | TextDocument, EngineSchema>();
 const pendingSchemas = new Map<string, EngineSchema>();
-async function sendSchemaForDocument(document: NotebookDocument) {
-    if (!isKustoNotebook(document) && !isJupyterNotebook(document)) {
+async function sendSchemaForDocument(document: NotebookDocument | TextDocument) {
+    if ('viewType' in document && !isKustoNotebook(document) && !isJupyterNotebook(document)) {
         return;
     }
     const info = getClusterAndDbFromDocumentMetadata(document);
@@ -79,7 +80,10 @@ async function sendSchemaForDocument(document: NotebookDocument) {
     pendingSchemas.set(document.uri.toString(), clone);
     sendSchemaForDocuments();
 }
-function shouldSendSchemaToLanguageServer(document: NotebookDocument, info?: { cluster?: string; database?: string }) {
+function shouldSendSchemaToLanguageServer(
+    document: NotebookDocument | TextDocument,
+    info?: { cluster?: string; database?: string }
+) {
     if (!info || !info.cluster || !info.database) {
         return true;
     }
@@ -90,7 +94,7 @@ function shouldSendSchemaToLanguageServer(document: NotebookDocument, info?: { c
     return false;
 }
 function sendSchemaForDocuments() {
-    if (!client || clientState !== State.Running) {
+    if (!client || !clientIsReady) {
         return;
     }
     pendingSchemas.forEach((engineSchema, uri) => {

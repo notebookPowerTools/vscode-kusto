@@ -1,8 +1,8 @@
 import KustoClient from 'azure-kusto-data/source/client';
 import { KustoResponseDataSet } from 'azure-kusto-data/source/response';
-import { notebook, NotebookDocument } from 'vscode';
+import { notebook, NotebookDocument, TextDocument } from 'vscode';
 import {
-    addDocumentConnectionHandler,
+    addNotebookConnectionHandler,
     ensureNotebookHasClusterDbInfo,
     getClusterAndDbFromDocumentMetadata
 } from '../kernel/notebookConnection';
@@ -10,14 +10,14 @@ import { IDisposable } from '../types';
 import { disposeAllDisposables, registerDisposable } from '../utils';
 import { getAccessToken, getClient } from './connectionProvider';
 
-const clientMap = new WeakMap<NotebookDocument, Promise<Client | undefined>>();
+const clientMap = new WeakMap<NotebookDocument | TextDocument, Promise<Client | undefined>>();
 
 export class Client implements IDisposable {
     private readonly disposables: IDisposable[] = [];
     private readonly client: KustoClient;
     public readonly hasAccessToken: boolean;
     constructor(
-        private readonly document: NotebookDocument,
+        private readonly document: NotebookDocument | TextDocument,
         public readonly clusterUri: string,
         private readonly db: string,
         accessToken?: string
@@ -30,7 +30,7 @@ export class Client implements IDisposable {
     public static async remove(document: NotebookDocument) {
         clientMap.delete(document);
     }
-    public static async create(document: NotebookDocument): Promise<Client | undefined> {
+    public static async create(document: NotebookDocument | TextDocument): Promise<Client | undefined> {
         const client = clientMap.get(document);
         if (client) {
             return client;
@@ -71,7 +71,7 @@ export class Client implements IDisposable {
         return this.client.execute(this.db, query);
     }
     private addHandlers() {
-        addDocumentConnectionHandler((e) => clientMap.delete(e));
+        addNotebookConnectionHandler((e) => clientMap.delete(e));
         notebook.onDidCloseNotebookDocument(
             (e) => {
                 if (e === this.document) {

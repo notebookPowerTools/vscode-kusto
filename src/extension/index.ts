@@ -8,6 +8,7 @@ import { ClusterTreeView } from './activityBar/clusterView';
 import { registerNotebookConnection } from './kernel/notebookConnection';
 import { initialize } from './languageServer';
 import { monitorJupyterCells } from './languageServer/jupyterNotebook';
+import { registerInteractiveExperience } from './interactive';
 
 let client: LanguageClient;
 
@@ -22,6 +23,7 @@ export function activate(context: ExtensionContext) {
     registerNotebookConnection();
     initialize(context);
     monitorJupyterCells();
+    registerInteractiveExperience();
 }
 
 export async function deactivate(): Promise<void> {

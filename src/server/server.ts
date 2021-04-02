@@ -68,12 +68,24 @@ connection.onDidChangeConfiguration((_change) => {
 function isNotebookCell(document: TextDocument) {
     return URI.parse(document.uri.toString()).scheme === 'vscode-notebook-cell';
 }
+function isKustoFile(document: TextDocument) {
+    return !isNotebookCell(document) && document.languageId === 'kusto';
+}
+function isInteractiveDocument(document: TextDocument) {
+    if (!isNotebookCell(document)) {
+        return false;
+    }
+    if (!document.uri.toLowerCase().includes('.knb-interactive')) {
+        return false;
+    }
+    return getNotebookUri(document).fsPath.toLowerCase().endsWith('.knb-interactive');
+}
 
 function updateDiagnosticsForDocument(uri: string) {
     uri = getNotebookUri(uri).toString();
     documents.all().forEach((doc) => {
         // If the document isn't a cell thats part of the affected notebook, then ignore this.
-        if (!isNotebookCell(doc) || getNotebookUri(doc).toString() !== uri) {
+        if (!isKustoFile(doc) && (!isNotebookCell(doc) || getNotebookUri(doc).toString() !== uri)) {
             return;
         }
         validateTextDocumentLater(doc);
@@ -94,7 +106,7 @@ documents.onDidChangeContent((change) => {
 const validationIntervals = new Map<string, any>();
 async function validateTextDocumentLater(textDocument: TextDocument) {
     const document = documents.get(textDocument.uri);
-    if (!document || !isNotebookCell(document)) {
+    if (!document || isInteractiveDocument(document) || (!isNotebookCell(document) && !isKustoFile(document))) {
         return null;
     }
     connection.console.log(`Provide completion ${document.uri.toString()}`);
@@ -104,7 +116,7 @@ async function validateTextDocumentLater(textDocument: TextDocument) {
 
 connection.onCompletion(async (textDocumentPosition, _token) => {
     const document = documents.get(textDocumentPosition.textDocument.uri);
-    if (!document || !isNotebookCell(document)) {
+    if (!document || isInteractiveDocument(document) || (!isNotebookCell(document) && !isKustoFile(document))) {
         return null;
     }
     connection.console.log(`Provide completion ${document.uri.toString()}`);
@@ -115,7 +127,7 @@ connection.onDidCloseTextDocument(async ({ textDocument }) => {
 });
 connection.onHover(async ({ textDocument, position }) => {
     const document = documents.get(textDocument.uri);
-    if (!document || !isNotebookCell(document)) {
+    if (!document || isInteractiveDocument(document) || (!isNotebookCell(document) && !isKustoFile(document))) {
         return null;
     }
     connection.console.log(`Provide hover ${document.uri.toString()}`);
@@ -123,7 +135,7 @@ connection.onHover(async ({ textDocument, position }) => {
 });
 connection.onDocumentFormatting(async ({ textDocument }) => {
     const document = documents.get(textDocument.uri);
-    if (!document || !isNotebookCell(document)) {
+    if (!document || isInteractiveDocument(document) || (!isNotebookCell(document) && !isKustoFile(document))) {
         return null;
     }
     connection.console.log(`Provide document formatting ${document.uri.toString()}`);
@@ -131,7 +143,7 @@ connection.onDocumentFormatting(async ({ textDocument }) => {
 });
 connection.onDocumentRangeFormatting(async ({ textDocument, range }) => {
     const document = documents.get(textDocument.uri);
-    if (!document || !isNotebookCell(document)) {
+    if (!document || isInteractiveDocument(document) || (!isNotebookCell(document) && !isKustoFile(document))) {
         return null;
     }
     connection.console.log(`Provide range formatting ${document.uri.toString()}`);
@@ -139,7 +151,7 @@ connection.onDocumentRangeFormatting(async ({ textDocument, range }) => {
 });
 connection.onRenameRequest(async ({ textDocument, position, newName }) => {
     const document = documents.get(textDocument.uri);
-    if (!document || !isNotebookCell(document)) {
+    if (!document || isInteractiveDocument(document) || (!isNotebookCell(document) && !isKustoFile(document))) {
         return null;
     }
     connection.console.log(`Provide rename ${document.uri.toString()}`);
@@ -147,7 +159,7 @@ connection.onRenameRequest(async ({ textDocument, position, newName }) => {
 });
 connection.onFoldingRanges(async ({ textDocument }) => {
     const document = documents.get(textDocument.uri);
-    if (!document || !isNotebookCell(document)) {
+    if (!document || isInteractiveDocument(document) || (!isNotebookCell(document) && !isKustoFile(document))) {
         return null;
     }
     connection.console.log(`Provide folding ${document.uri.toString()}`);
