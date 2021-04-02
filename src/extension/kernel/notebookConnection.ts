@@ -16,23 +16,27 @@ import { debug, logError, registerDisposable } from '../utils';
 import { create, InputFlowAction, MultiStepInput } from './multiStepInput';
 import { isJupyterNotebook, isKustoNotebook } from './provider';
 
-const onDidChangeConnection = new EventEmitter<NotebookDocument>();
+const onDidChangeConnection = new EventEmitter<NotebookDocument | TextDocument>();
 const onDidChangeCluster = new EventEmitter<{ clusterUri: string; change: 'added' | 'removed' }>();
 
 export function registerNotebookConnection() {
     registerDisposable(onDidChangeConnection);
-    registerDisposable(commands.registerCommand('kusto.changeNotebookDatabase', onChangeNotebookDatabase));
+    registerDisposable(commands.registerCommand('kusto.changeNotebookDatabase', changeDocumentConnection));
     registerDisposable(notebook.onDidChangeNotebookCells(onDidChangeJupyterNotebookCells));
     registerDisposable(workspace.onDidChangeTextDocument((e) => onDidChangeJupyterNotebookCell(e.document)));
 }
-export function addDocumentConnectionHandler(cb: (document: NotebookDocument) => void) {
+export function addNotebookConnectionHandler(cb: (document: NotebookDocument | TextDocument) => void) {
     registerDisposable(onDidChangeConnection.event(cb));
 }
 export function addClusterAddedHandler(cb: (change: { clusterUri: string; change: 'added' | 'removed' }) => void) {
     registerDisposable(onDidChangeCluster.event(cb));
 }
-export async function ensureNotebookHasClusterDbInfo(document: NotebookDocument) {
-    await ensureNotebookHasClusterDbInfoInternal(document, false);
+export async function ensureNotebookHasClusterDbInfo(document: NotebookDocument | TextDocument) {
+    if ('viewType' in document) {
+        await ensureNotebookHasClusterDbInfoInternal(document, false);
+    } else {
+        await ensureDocumentHasClusterDbInfoInternal(document, true);
+    }
 }
 async function ensureNotebookHasClusterDbInfoInternal(document: NotebookDocument, changeExistingValue = false) {
     const currentInfo = getClusterAndDbFromDocumentMetadata(document);
@@ -42,7 +46,7 @@ async function ensureNotebookHasClusterDbInfoInternal(document: NotebookDocument
     if (!isKustoNotebook(document)) {
         return;
     }
-    const info = await captureClusterAndDatabaseFromUser(document);
+    const info = await captureClusterAndDatabaseFromUser(getClusterAndDbFromDocumentMetadata(document));
     if (!info) {
         return;
     }
@@ -51,17 +55,36 @@ async function ensureNotebookHasClusterDbInfoInternal(document: NotebookDocument
     }
     await updateClusterDbInNotebook(document, info);
 }
-async function onChangeNotebookDatabase(uri?: Uri) {
-    uri = uri || window.activeNotebookEditor?.document.uri;
+async function ensureDocumentHasClusterDbInfoInternal(document: TextDocument, changeExistingValue = false) {
+    const currentInfo: Connection | undefined = getFromCache(document.uri.fsPath.toLowerCase());
+    if (!changeExistingValue && currentInfo) {
+        return;
+    }
+    const info = await captureClusterAndDatabaseFromUser(currentInfo || {});
+    if (!info) {
+        return;
+    }
+    if (info.cluster === currentInfo?.cluster && info.database === currentInfo?.database) {
+        return;
+    }
+    await updateCache(document.uri.fsPath.toLowerCase(), info);
+    onDidChangeConnection.fire(document);
+}
+async function changeDocumentConnection(uri?: Uri) {
+    uri = uri || window.activeNotebookEditor?.document.uri || window.activeTextEditor?.document.uri;
     if (!uri) {
         return;
     }
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const document = notebook.notebookDocuments.find((item) => item.uri.toString() === uri!.toString());
-    if (!document) {
-        return;
+    if (document) {
+        return ensureNotebookHasClusterDbInfoInternal(document, true);
     }
-    ensureNotebookHasClusterDbInfoInternal(document, true);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const textDocument = workspace.textDocuments.find((item) => item.uri.toString() === uri!.toString());
+    if (textDocument) {
+        ensureDocumentHasClusterDbInfoInternal(textDocument, true);
+    }
 }
 function onDidChangeJupyterNotebookCells(e: NotebookCellsChangeEvent) {
     if (!isJupyterNotebook(e.document)) {
@@ -93,10 +116,9 @@ function triggerJupyterConnectionChanged(notebook: NotebookDocument) {
     // Trigger a change after 0.5s, possible user is still typing in the cell.
     timeout = setTimeout(() => onDidChangeConnection.fire(notebook), 500);
 }
-async function captureClusterAndDatabaseFromUser(document: NotebookDocument) {
-    const info = getClusterAndDbFromDocumentMetadata(document);
+async function captureClusterAndDatabaseFromUser(connection: Partial<Connection> = {}) {
     const state = {
-        connection: info,
+        connection: JSON.parse(JSON.stringify(connection)),
         dismissed: false
     };
     const multiStep = create<typeof state>();
@@ -107,16 +129,21 @@ async function captureClusterAndDatabaseFromUser(document: NotebookDocument) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return { cluster: state.connection.cluster!, database: state.connection.database! };
 }
-export function getClusterAndDbFromDocumentMetadata(document: NotebookDocument): Partial<Connection> {
-    if (isJupyterNotebook(document)) {
-        return getClusterAndDbFromJupyterNotebook(document);
+export function getClusterAndDbFromDocumentMetadata(document: NotebookDocument | TextDocument): Partial<Connection> {
+    if ('viewType' in document) {
+        if (isJupyterNotebook(document)) {
+            return getClusterAndDbFromJupyterNotebook(document);
+        }
+        const cluster: string | undefined = document.metadata.custom.cluster;
+        const database: string | undefined = document.metadata.custom.database;
+        return {
+            cluster,
+            database
+        };
+    } else {
+        // TextDocument.
+        return getFromCache(document.uri.fsPath.toLowerCase()) || {};
     }
-    const cluster: string | undefined = document.metadata.custom.cluster;
-    const database: string | undefined = document.metadata.custom.database;
-    return {
-        cluster,
-        database
-    };
 }
 const kqlMagicConnectionStringStartDelimiter = 'AzureDataExplorer://'.toLowerCase();
 function textDocumentHasJupyterConnectionInfo(textDocument: TextDocument) {
