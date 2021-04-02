@@ -8,6 +8,10 @@ export const EXTENSION_ROOT_DIR = path.join(__dirname, '..', '..');
 export const noop = () => {};
 
 export enum GlobalMementoKeys {
+    clusterUris = 'clusterUris',
     lastEnteredClusterUri = 'lastEnteredClusterUri',
-    lastEnteredDatabase = 'lastEnteredDatabase'
+    lastEnteredDatabase = 'lastEnteredDatabase',
+    prefixForClusterSchema = 'prefixForClusterSchema',
+    prefixForDatabasesInACluster = 'prefixForDatabasesInACluster',
+    prefixForTablesInAClusterDB = 'prefixForTablesInAClusterDB'
 }

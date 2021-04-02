@@ -29,6 +29,10 @@ export function debug(message: string, ...args: unknown[]) {
     console.debug(message, ...args);
 }
 
+export function logError(message: string, ...args: unknown[]) {
+    console.error(message, ...args);
+}
+
 //======================
 // Deferred
 

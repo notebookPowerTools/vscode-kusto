@@ -2,7 +2,7 @@
     "name": "kusto",
     "displayName": "Kusto Notebooks",
     "description": "Kusto Queries in Notebooks",
-    "version": "0.0.4",
+    "version": "0.1.0",
     "engines": {
         "vscode": "^1.55.0"
     },
@@ -37,10 +37,117 @@
         "Visualization"
     ],
     "activationEvents": [
-        "onNotebook:kusto-notebook"
+        "onNotebook:kusto-notebook",
+        "onLanguage:plaintext",
+        "onView:kustoExplorer"
     ],
     "main": "./out/extension/index.js",
     "contributes": {
+        "commands": [
+            {
+                "command": "languageServerExample.startStreaming",
+                "title": "Kussto Language Server"
+            },
+            {
+                "command": "kusto.addCluster",
+                "title": "Add Cluster",
+                "icon": "$(add)"
+            },
+            {
+                "command": "kusto.removeCluster",
+                "title": "Remove Cluster",
+                "icon": "$(trash)"
+            },
+            {
+                "command": "kusto.refreshNode",
+                "title": "Refresh",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "kusto.changeNotebookDatabase",
+                "title": "Configure Kusto Notebook Cluster/Datbase Connection",
+                "icon": "$(database)"
+            }
+        ],
+        "languages": [
+            {
+                "id": "kusto",
+                "aliases": [
+                    "Kusto",
+                    "kusto"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "kusto",
+                "scopeName": "source.kusto",
+                "path": "./syntaxes/kusto.tmLanguage"
+            }
+        ],
+        "viewsContainers": {
+			"activitybar": [
+				{
+					"id": "kusto-explorer",
+					"title": "Kusto",
+					"icon": "resources/icons/activity.svg"
+				}
+			]
+		},
+		"views": {
+			"kusto-explorer": [
+				{
+					"id": "kustoExplorer",
+					"name": "Clusters",
+					"icon": "resources/icons/activity.svg",
+					"contextualTitle": "Kusto Clusters"
+				}
+			]
+		},
+        "menus": {
+            "view/title": [
+                {
+                    "command": "kusto.addCluster",
+                    "when": "view == kustoExplorer",
+                    "group": "navigation"
+                },
+                {
+                    "command": "kusto.refreshNode",
+                    "when": "view == kustoExplorer",
+                    "group": "navigation"
+                }
+            ],
+            "editor/title": [
+                {
+                    "command": "kusto.changeNotebookDatabase",
+                    "when": "notebookViewType == 'kusto-notebook'",
+                    "group": "navigation@1"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "kusto.removeCluster",
+                    "when": "view == kustoExplorer && viewItem == cluster",
+                    "group": "inline"
+                },
+                {
+                    "command": "kusto.refreshNode",
+                    "when": "view == kustoExplorer && viewItem == cluster",
+                    "group": "inline"
+                },
+                {
+                    "command": "kusto.refreshNode",
+                    "when": "view == kustoExplorer && viewItem == database",
+                    "group": "inline"
+                },
+                {
+                    "command": "kusto.refreshNode",
+                    "when": "view == kustoExplorer && viewItem == table",
+                    "group": "inline"
+                }
+            ]
+        },
         "notebookProvider": [
             {
                 "viewType": "kusto-notebook",
@@ -83,15 +190,17 @@
     },
     "scripts": {
         "vscode:prepublish": "npm run compile:webpack",
-        "dev": "concurrently -r npm:compile:extension:watch npm:compile:client:watch npm:compile:test:watch",
+        "dev": "concurrently -r npm:compile:extension:watch npm:compile:client:watch npm:compile:server:watch npm:compile:test:watch",
         "compile": "npm run compile:extension && npm run compile:test && npm run compile:client",
         "compile:extension": "tsc -p src/extension",
         "compile:extension:watch": "tsc -p src/extension --watch",
+        "compile:server:watch": "tsc -p src/server --watch",
         "compile:test": "tsc -p src/test",
         "compile:test:watch": "tsc -p src/test --watch",
         "compile:webpack": "npm run build:client && npm run build:extension",
         "compile:client": "webpack --config=build/webpack/webpack.client.config.js",
         "build:client": "webpack --config=build/webpack/webpack.client.config.js --mode=production",
+        "build:server": "webpack --config=build/webpack/webpack.server.config.js --mode=production",
         "build:extension": "webpack --config=build/webpack/webpack.extension.config.js --mode=production",
         "compile:client:watch": "webpack --config=build/webpack/webpack.client.config.js --watch",
         "lint": "eslint src --ext ts && eslint src --ext tsx && eslint build --ext js",
@@ -108,6 +217,7 @@
         "@deck.gl/core": "^8.3.7",
         "@deck.gl/layers": "^8.3.7",
         "@fluentui/react": "^7.150.0",
+        "@kusto/monaco-kusto": "^3.2.5",
         "@luma.gl/core": "^8.3.1",
         "@msrvida/sanddance-explorer": "^3",
         "ag-grid-community": "^25.1.0",
@@ -120,7 +230,12 @@
         "react-json-view": "^1.21.3",
         "styled-components": "^5.2.1",
         "uuid": "^3.3.2",
-        "vega": "^5.17.0"
+        "vega": "^5.17.0",
+        "vscode-languageclient": "^7.0.0",
+        "vscode-languageserver": "^7.0.0",
+        "vscode-languageserver-textdocument": "^1.0.1",
+        "vscode-languageserver-types": "^3.16.0",
+        "vscode-uri": "^3.0.2"
     },
     "devDependencies": {
         "@msrvida/fluentui-react-cdn-typings": "1",
