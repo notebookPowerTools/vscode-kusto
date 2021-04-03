@@ -48,6 +48,16 @@
     ],
     "main": "./out/extension/index.js",
     "contributes": {
+        "configuration": {
+            "type": "object",
+            "properties": {
+                "kusto.persistOutputs": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to persist the outputs of the notebook to the Kusto notebook file."
+                }
+            }
+        },
         "commands": [
             {
                 "command": "kusto.createNotebook",

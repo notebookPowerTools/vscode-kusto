@@ -1,4 +1,5 @@
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { KustoResponseDataSet } from 'azure-kusto-data/source/response';
 import {
     CancellationToken,
@@ -51,10 +52,15 @@ type KustoNotebook = {
 };
 
 export class ContentProvider implements NotebookContentProvider {
+    constructor(private readonly _persistOutputs: boolean) {}
+
     public static register() {
-        const disposable = notebook.registerNotebookContentProvider('kusto-notebook', new ContentProvider(), {
-            transientOutputs: false,
-            transientMetadata: {}
+        const persistOutputs = vscode.workspace.getConfiguration().get<boolean>('kusto.persistOutputs');
+        const disposable = notebook.registerNotebookContentProvider('kusto-notebook', new ContentProvider(persistOutputs ?? false), {
+            transientOutputs: !persistOutputs,
+            transientMetadata: {
+                statusMessage: !persistOutputs
+            }
         });
         registerDisposable(disposable);
     }
@@ -144,17 +150,24 @@ export class ContentProvider implements NotebookContentProvider {
     private async saveAs(uri: Uri, document: NotebookDocument) {
         const notebook: KustoNotebook = {
             cells: document.cells.map((cell) => {
-                let output: KustoResponseDataSet | undefined;
-                cell.outputs.forEach((item) => {
-                    const kustoOutputItem = item.outputs.find((outputItem) =>
-                        outputItem.mime.startsWith('application/vnd.kusto.result')
-                    );
-                    output = output || (kustoOutputItem?.value as KustoResponseDataSet);
-                });
+                let outputs: KustoResponseDataSet[] = [];
+
+                if (this._persistOutputs) {
+                    let output: KustoResponseDataSet | undefined;
+                    cell.outputs.forEach((item) => {
+                        const kustoOutputItem = item.outputs.find((outputItem) =>
+                            outputItem.mime.startsWith('application/vnd.kusto.result')
+                        );
+                        output = output || (kustoOutputItem?.value as KustoResponseDataSet);
+                    });
+
+                    outputs = output ? [output] : [];
+                }
+
                 const kustoCell: KustoCell = {
                     kind: cell.kind === NotebookCellKind.Code ? 'code' : 'markdown',
                     source: cell.document.getText(),
-                    outputs: output ? [output] : []
+                    outputs: outputs
                 };
                 const cellMetadata: KustoCellMetadata = {};
                 if (cell.metadata.inputCollapsed === true) {
