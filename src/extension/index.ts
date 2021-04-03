@@ -8,6 +8,7 @@ import { ClusterTreeView } from './activityBar/clusterView';
 import { registerNotebookConnection } from './kernel/notebookConnection';
 import { initialize } from './languageServer';
 import { monitorJupyterCells } from './languageServer/jupyterNotebook';
+import { registerConfigurationListener } from './configuration';
 
 let client: LanguageClient;
 
@@ -20,6 +21,7 @@ export function activate(context: ExtensionContext) {
     // DiagnosticProvider.register();
     ClusterTreeView.register();
     registerNotebookConnection();
+    registerConfigurationListener(context);
     initialize(context);
     monitorJupyterCells();
 }
