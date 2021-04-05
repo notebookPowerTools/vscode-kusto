@@ -2,7 +2,7 @@
     "name": "kusto",
     "displayName": "Kusto Notebooks",
     "description": "Run Kusto Queries in Notebooks",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "engines": {
         "vscode": "^1.55.0"
     },
@@ -231,15 +231,6 @@
                     "application/vnd.kusto.result+json",
                     "application/vnd.kusto.result.viz+json"
                 ]
-            },
-            {
-                "id": "kusto-notebook-renderer-sand",
-                "entrypoint": "./out/renderer/sanddance.js",
-                "displayName": "Sanddance Explorer",
-                "mimeTypes": [
-                    "application/vnd.kusto.result+json",
-                    "application/vnd.kusto.result.viz+json"
-                ]
             }
         ]
     },
@@ -269,12 +260,8 @@
         "postinstall": "npm run download-api"
     },
     "dependencies": {
-        "@deck.gl/core": "^8.3.7",
-        "@deck.gl/layers": "^8.3.7",
         "@fluentui/react": "^7.150.0",
         "@kusto/monaco-kusto": "^3.2.5",
-        "@luma.gl/core": "^8.3.1",
-        "@msrvida/sanddance-explorer": "^3",
         "ag-grid-community": "^25.1.0",
         "ag-grid-react": "^25.1.0",
         "azure-kusto-data": "^2.1.5",
@@ -285,7 +272,6 @@
         "react-json-view": "^1.21.3",
         "styled-components": "^5.2.1",
         "uuid": "^3.3.2",
-        "vega": "^5.17.0",
         "vscode-languageclient": "^7.0.0",
         "vscode-languageserver": "^7.0.0",
         "vscode-languageserver-textdocument": "^1.0.1",

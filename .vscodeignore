@@ -7,6 +7,7 @@ out/**/*.map
 out/**/*.stats.json
 out/**/*..analyzer.html
 src/**
+temp/**
 .gitignore
 node_modules
 vsc-extension-quickstart.md

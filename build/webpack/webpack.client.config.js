@@ -11,8 +11,7 @@ module.exports = {
     context: constants.ExtensionRootDir,
     entry: {
         visualization: './src/client/visualization.tsx',
-        datatable: './src/client/datatable.tsx',
-        sanddance: './src/client/sanddance.tsx'
+        datatable: './src/client/datatable.tsx'
     },
     output: {
         path: path.join(constants.ExtensionRootDir, 'out', 'renderer'),

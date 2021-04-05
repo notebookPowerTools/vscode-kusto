@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.6 (4 April 2021)
+### Enhancements
+
+1. Optionally save output in the notebook. Defaults to `false`.
+1. Create notebooks from the `Kusto` view in Database & Table nodes.
+1. Ability to delete connections.
+
 ## 0.0.5 (1 April 2021)
 ### Enhancements
 
@@ -27,5 +34,4 @@ Initial release
 Thanks to the various projects we provide integrations with which help
 make this extension useful:
 
--   [plotly](https://github.com/plotly/plotly.js),
-    [SandDance](https://github.com/microsoft/SandDance),
+-   [plotly](https://github.com/plotly/plotly.js)
