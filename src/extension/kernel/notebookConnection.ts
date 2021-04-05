@@ -11,6 +11,7 @@ import { commands, notebook, NotebookDocument, ThemeIcon, Uri, workspace, Worksp
 import { getFromCache, updateCache } from '../cache';
 import { GlobalMementoKeys } from '../constants';
 import { getClusterSchema } from '../kusto/schemas';
+import { getClusterDisplayName } from '../kusto/utils';
 import { Connection } from '../types';
 import { debug, logError, registerDisposable } from '../utils';
 import { create, InputFlowAction, MultiStepInput } from './multiStepInput';
@@ -195,7 +196,7 @@ async function selectClusterUri(
     if (clusters.length === 0) {
         return addClusterUriAndSelectDb(multiStepInput, state);
     }
-    const quickPickItems = clusters.map((cluster) => ({ label: cluster }));
+    const quickPickItems = clusters.map((cluster) => ({ label: getClusterDisplayName(cluster), description: cluster }));
     const selection = await multiStepInput.showQuickPick({
         title: 'Select a cluster',
         matchOnDescription: true,
@@ -214,8 +215,8 @@ async function selectClusterUri(
     if ('iconPath' in selection) {
         // Add a new cluster.
         return addClusterUriAndSelectDb(multiStepInput, state);
-    } else if ('label' in selection) {
-        state.connection.cluster = selection.label;
+    } else if ('description' in selection) {
+        state.connection.cluster = selection.description;
         return selectDatabase(multiStepInput, state);
     } else {
         state.dismissed = true;
