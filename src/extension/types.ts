@@ -22,4 +22,6 @@ export type DeepReadonly<T> = T extends (infer R)[]
     ? DeepReadonlyObject<T>
     : T;
 
-export type Connection = { cluster: string; database: string };
+export type ReadWrite<T> = {
+    -readonly [P in keyof T]: T[P];
+};

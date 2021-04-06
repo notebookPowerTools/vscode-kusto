@@ -1,5 +1,6 @@
-import { CancellationToken, ExtensionContext, Uri } from 'vscode';
 import { IDisposable } from './types';
+import { CancellationToken, ExtensionContext, TextDocument, Uri } from 'vscode';
+import { createHash } from 'crypto';
 
 const disposables: IDisposable[] = [];
 export function registerDisposableRegistry(context: ExtensionContext) {
@@ -127,4 +128,10 @@ export function createPromiseFromToken<T>(
 
 export function isUntitledFile(file?: Uri) {
     return file?.scheme === 'untitled';
+}
+export function isKustoFile(document: TextDocument) {
+    return document.languageId === 'kusto';
+}
+export function getHash(value: string) {
+    return createHash('sha1').update(value).digest('hex');
 }

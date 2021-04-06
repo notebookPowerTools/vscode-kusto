@@ -5,25 +5,27 @@ import { LanguageClient } from 'vscode-languageclient/node';
 import { ExtensionContext } from 'vscode';
 import { initializeCache } from './cache';
 import { ClusterTreeView } from './activityBar/clusterView';
-import { registerNotebookConnection } from './kernel/notebookConnection';
+import { registerNotebookConnection } from './kusto/connections/notebookConnection';
 import { initialize } from './languageServer';
 import { monitorJupyterCells } from './languageServer/jupyterNotebook';
 import { registerConfigurationListener } from './configuration';
+import { initializeConnectionStorage } from './kusto/connections/storage';
+import { registerInteractiveExperience } from './kernel/interactive';
 
 let client: LanguageClient;
 
-export function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
+    initializeConnectionStorage(context);
     initializeCache(context.globalState);
     KernelProvider.register();
     registerDisposableRegistry(context);
     ContentProvider.register();
-    // CompletionProvider.register();
-    // DiagnosticProvider.register();
     ClusterTreeView.register();
     registerNotebookConnection();
     registerConfigurationListener(context);
     initialize(context);
     monitorJupyterCells();
+    registerInteractiveExperience();
 }
 
 export async function deactivate(): Promise<void> {

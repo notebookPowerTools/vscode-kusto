@@ -37,14 +37,16 @@
         "Visualization"
     ],
     "activationEvents": [
+        "onLanguage:kusto",
         "onNotebook:kusto-notebook",
         "onNotebook:jupyter-notebook",
         "onLanguage:plaintext",
         "onView:kustoExplorer",
-        "onCommand:kusto.addCluster",
-        "onCommand:kusto.removeCluster",
+        "onCommand:kusto.executeSelectedQuery",
+        "onCommand:kusto.addConnection",
+        "onCommand:kusto.removeConnection",
         "onCommand:kusto.refreshNode",
-        "onCommand:kusto.changeNotebookDatabase"
+        "onCommand:kusto.changeDocumentConnection"
     ],
     "main": "./out/extension/index.js",
     "contributes": {
@@ -66,18 +68,24 @@
                 "icon": "$(notebook)"
             },
             {
-                "command": "kusto.changeNotebookDatabase",
+                "command": "kusto.executeSelectedQuery",
+                "title": "Execute Selected Query",
+                "category": "Kusto",
+                "icon": "$(notebook)"
+            },
+            {
+                "command": "kusto.changeDocumentConnection",
                 "title": "Configure Kusto Cluster & Database for Notebooks",
                 "category": "Notebook",
                 "icon": "$(database)"
             },
             {
-                "command": "kusto.addCluster",
+                "command": "kusto.addConnection",
                 "title": "Add Cluster",
                 "icon": "$(add)"
             },
             {
-                "command": "kusto.removeCluster",
+                "command": "kusto.removeConnection",
                 "title": "Remove Cluster",
                 "icon": "$(trash)"
             },
@@ -128,18 +136,29 @@
                 }
             ]
         },
+        "keybindings": [
+            {
+                "command": "kusto.executeSelectedQuery",
+                "key": "shift+enter",
+                "when": "editorTextFocus && editorLangId == kusto && !findInputFocussed && !replaceInputFocussed && !notebookEditorFocused"
+            }
+        ],
         "menus": {
             "commandPalette": [
                 {
-                    "command": "kusto.changeNotebookDatabase",
+                    "command": "kusto.changeDocumentConnection",
                     "when": "notebookViewType == kusto-notebook"
                 },
                 {
-                    "command": "kusto.addCluster",
+                    "command": "kusto.executeSelectedQuery",
+                    "when": "editorLangId == kusto"
+                },
+                {
+                    "command": "kusto.addConnection",
                     "when": "config.noExists"
                 },
                 {
-                    "command": "kusto.removeCluster",
+                    "command": "kusto.removeConnection",
                     "when": "config.noExists"
                 },
                 {
@@ -153,7 +172,7 @@
             ],
             "view/title": [
                 {
-                    "command": "kusto.addCluster",
+                    "command": "kusto.addConnection",
                     "when": "view == kustoExplorer",
                     "group": "navigation"
                 },
@@ -165,14 +184,26 @@
             ],
             "editor/title": [
                 {
-                    "command": "kusto.changeNotebookDatabase",
+                    "command": "kusto.changeDocumentConnection",
                     "when": "notebookViewType == kusto-notebook",
                     "group": "navigation@1"
+                },
+                {
+                    "command": "kusto.changeDocumentConnection",
+                    "when": "editorLangId == kusto",
+                    "group": "navigation@1"
+                }
+            ],
+            "editor/context": [
+                {
+                    "command": "kusto.executeSelectedQuery",
+                    "group": "Kusto",
+                    "when": "editorFocus && editorLangId == kusto && !notebookEditorFocused"
                 }
             ],
             "view/item/context": [
                 {
-                    "command": "kusto.removeCluster",
+                    "command": "kusto.removeConnection",
                     "when": "view == kustoExplorer && viewItem == cluster",
                     "group": "inline"
                 },
@@ -210,6 +241,15 @@
                 "selector": [
                     {
                         "filenamePattern": "*.knb"
+                    }
+                ]
+            },
+            {
+                "viewType": "kusto-interactive",
+                "displayName": "Kusto Interactive",
+                "selector": [
+                    {
+                        "filenamePattern": "*.knb-interactive"
                     }
                 ]
             }
@@ -264,6 +304,7 @@
         "@kusto/monaco-kusto": "^3.2.5",
         "ag-grid-community": "^25.1.0",
         "ag-grid-react": "^25.1.0",
+        "axios": "^0.21.1",
         "azure-kusto-data": "^2.1.5",
         "lodash": "^4.17.19",
         "plotly.js": "^1.58.4",
@@ -271,7 +312,7 @@
         "react-dom": "^16.8.4",
         "react-json-view": "^1.21.3",
         "styled-components": "^5.2.1",
-        "uuid": "^3.3.2",
+        "uuid": "^3.4.0",
         "vscode-languageclient": "^7.0.0",
         "vscode-languageserver": "^7.0.0",
         "vscode-languageserver-textdocument": "^1.0.1",

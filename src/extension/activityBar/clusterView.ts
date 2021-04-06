@@ -1,10 +1,11 @@
 import { EOL } from 'os';
 import { commands, window } from 'vscode';
 import { createUntitledNotebook } from '../content/provider';
-import { addClusterAddedHandler, addClusterUri, removeCachedCluster } from '../kernel/notebookConnection';
-import { Connection } from '../types';
 import { registerDisposable } from '../utils';
 import { ClusterNode, DatabaseNode, KustoClusterExplorer, TableNode } from './treeData';
+import { addNewConnection } from '../kusto/connections/management';
+import { getCachedConnections, onConnectionChanged } from '../kusto/connections/storage';
+import { fromConnectionInfo } from '../kusto/connections';
 
 export class ClusterTreeView {
     constructor(private readonly clusterExplorer: KustoClusterExplorer) {}
@@ -18,40 +19,40 @@ export class ClusterTreeView {
         });
         registerDisposable(treeView);
         const handler = new ClusterTreeView(clusterExplorer);
-        registerDisposable(commands.registerCommand('kusto.addCluster', addClusterUri));
-        registerDisposable(commands.registerCommand('kusto.removeCluster', handler.removeCluster, handler));
+        registerDisposable(commands.registerCommand('kusto.addConnection', () => addNewConnection()));
+        registerDisposable(commands.registerCommand('kusto.removeConnection', handler.removeConnection, handler));
         registerDisposable(commands.registerCommand('kusto.refreshNode', handler.onRefreshNode, handler));
         registerDisposable(commands.registerCommand('kusto.createNotebook', handler.createNotebook, handler));
-        addClusterAddedHandler((e) =>
+        onConnectionChanged((e) =>
             e.change === 'added'
-                ? clusterExplorer.addCluster(e.clusterUri)
-                : clusterExplorer.removeCluster(e.clusterUri)
+                ? clusterExplorer.addConnection(e.connection)
+                : clusterExplorer.removeCluster(e.connection)
         );
         clusterExplorer.refresh();
     }
 
     private async onRefreshNode(e) {
         if (e instanceof ClusterNode) {
-            this.clusterExplorer.refreshCluster(e.clusterUri);
+            this.clusterExplorer.refreshConnection(e.info);
         }
         if (e instanceof DatabaseNode) {
-            this.clusterExplorer.refreshCluster(e.parent.clusterUri);
+            this.clusterExplorer.refreshConnection(e.parent.info);
         }
         if (e instanceof TableNode) {
-            this.clusterExplorer.refreshCluster(e.parent.parent.clusterUri);
+            this.clusterExplorer.refreshConnection(e.parent.parent.info);
         }
         if (!e) {
             this.clusterExplorer.refresh();
         }
     }
 
-    private async removeCluster(cluster: ClusterNode) {
+    private async removeConnection(connectionNode: ClusterNode) {
         // In case this command gets added else where & I forget.
-        if (!cluster || !(cluster instanceof ClusterNode)) {
+        if (!connectionNode || !(connectionNode instanceof ClusterNode)) {
             return;
         }
         const selection = await window.showWarningMessage(
-            `Are you sure you want to remove the cluster ${cluster.clusterUri}`,
+            `Are you sure you want to remove the cluster ${connectionNode.info.id}`,
             {
                 modal: true
             },
@@ -60,7 +61,12 @@ export class ClusterTreeView {
         if (selection !== 'Yes') {
             return;
         }
-        await removeCachedCluster(cluster.clusterUri);
+        const connections = getCachedConnections();
+        const item = connections.find((item) => item.id === connectionNode.info.id);
+        if (!item) {
+            return;
+        }
+        await fromConnectionInfo(item).delete();
     }
 
     private async createNotebook(dataBaseOrTableNote: DatabaseNode | TableNode) {
@@ -71,22 +77,19 @@ export class ClusterTreeView {
         ) {
             return;
         }
-        const clusterUri =
+        const connectionInfo =
             dataBaseOrTableNote instanceof DatabaseNode
-                ? dataBaseOrTableNote.parent.clusterUri
-                : dataBaseOrTableNote.parent.parent.clusterUri;
+                ? dataBaseOrTableNote.parent.info
+                : dataBaseOrTableNote.parent.parent.info;
         const database =
             dataBaseOrTableNote instanceof DatabaseNode
                 ? dataBaseOrTableNote.database.name
                 : dataBaseOrTableNote.parent.database.name;
-        const connection: Connection = {
-            cluster: clusterUri,
-            database
-        };
         let cellCode = '';
         if (dataBaseOrTableNote instanceof TableNode) {
             cellCode = [dataBaseOrTableNote.table.name, '| take 1'].join(EOL);
         }
-        await createUntitledNotebook(connection, cellCode);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await createUntitledNotebook({ ...connectionInfo, database } as any, cellCode);
     }
 }

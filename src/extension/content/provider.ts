@@ -20,10 +20,10 @@ import {
     Uri,
     workspace
 } from 'vscode';
-import { isKustoNotebook } from '../kernel/provider';
+import { isKustoInteractive, isKustoNotebook } from '../kernel/provider';
 import { getCellOutput } from '../output/chart';
 import { debug, isUntitledFile, registerDisposable } from '../utils';
-import { Connection } from '../types';
+import { IConnectionInfo } from '../kusto/connections/types';
 
 type KustoCellMetadata = {
     locked?: boolean;
@@ -43,9 +43,7 @@ type KustoCell = {
 };
 type KustoNotebookMetadata = {
     locked?: boolean;
-    cluster?: string;
-    database?: string;
-};
+} & Partial<IConnectionInfo>;
 type KustoNotebook = {
     cells: KustoCell[];
     metadata?: KustoNotebookMetadata;
@@ -56,10 +54,24 @@ export class ContentProvider implements NotebookContentProvider {
 
     public static register() {
         const persistOutputs = vscode.workspace.getConfiguration().get<boolean>('kusto.persistOutputs');
-        const disposable = notebook.registerNotebookContentProvider('kusto-notebook', new ContentProvider(persistOutputs ?? false), {
-            transientOutputs: !persistOutputs,
+        let disposable = notebook.registerNotebookContentProvider(
+            'kusto-notebook',
+            new ContentProvider(persistOutputs ?? false),
+            {
+                transientOutputs: !persistOutputs,
+                transientMetadata: {
+                    statusMessage: !persistOutputs
+                }
+            }
+        );
+        registerDisposable(disposable);
+        disposable = notebook.registerNotebookContentProvider('kusto-interactive', new ContentProvider(false), {
+            transientOutputs: true,
             transientMetadata: {
-                statusMessage: !persistOutputs
+                custom: true,
+                editable: true,
+                inputCollapsed: true,
+                outputCollapsed: true
             }
         });
         registerDisposable(disposable);
@@ -74,7 +86,9 @@ export class ContentProvider implements NotebookContentProvider {
     ): Promise<NotebookData> {
         try {
             let notebook: KustoNotebook = { cells: [] };
-            if (isUntitledFile(uri) && contentsForNextUntitledFile.has(uri.fsPath)) {
+            if (isKustoInteractive(uri)) {
+                // Do nothing.
+            } else if (isUntitledFile(uri) && contentsForNextUntitledFile.has(uri.fsPath)) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 notebook = contentsForNextUntitledFile.get(uri.fsPath)!;
                 contentsForNextUntitledFile.delete(uri.fsPath);
@@ -100,20 +114,35 @@ export class ContentProvider implements NotebookContentProvider {
                 );
             });
             const custom: Record<string, string> = {};
-            if (notebook.metadata?.database) {
-                custom.database = notebook.metadata?.database;
+            if (notebook.metadata) {
+                if ('id' in notebook.metadata && notebook.metadata.id) {
+                    custom.id = notebook.metadata.id;
+                }
+                if ('type' in notebook.metadata && notebook.metadata.type) {
+                    custom.type = notebook.metadata.type;
+                }
+                if ('database' in notebook.metadata && notebook.metadata.database) {
+                    custom.database = notebook.metadata?.database;
+                }
+                if ('cluster' in notebook.metadata && notebook.metadata.cluster) {
+                    custom.cluster = notebook.metadata?.cluster;
+                }
             }
-            if (notebook.metadata?.cluster) {
-                custom.cluster = notebook.metadata?.cluster;
-            }
-            const metadata = new NotebookDocumentMetadata().with({
+            let metadata = new NotebookDocumentMetadata().with({
                 cellEditable: !notebook.metadata?.locked,
                 cellHasExecutionOrder: false,
                 editable: !notebook.metadata?.locked,
                 trusted: true,
                 custom
             });
-
+            if (isKustoInteractive(uri)) {
+                metadata = new NotebookDocumentMetadata().with({
+                    cellEditable: false,
+                    cellHasExecutionOrder: false,
+                    editable: false,
+                    trusted: true
+                });
+            }
             console.log(metadata);
             console.log(cells);
             return new NotebookData(cells, metadata);
@@ -188,9 +217,8 @@ export class ContentProvider implements NotebookContentProvider {
 
         if (!document.metadata.editable || Object.keys(document.metadata.custom).length) {
             const notebookMetadata: KustoNotebookMetadata = {};
+            Object.assign(notebookMetadata, document.metadata.custom);
             notebookMetadata.locked = !document.metadata.editable;
-            notebookMetadata.cluster = document.metadata.custom?.cluster;
-            notebookMetadata.database = document.metadata.custom?.database;
             notebook.metadata = notebookMetadata;
         }
 
@@ -200,12 +228,13 @@ export class ContentProvider implements NotebookContentProvider {
 }
 
 const contentsForNextUntitledFile = new Map<string, KustoNotebook>();
-export async function createUntitledNotebook(connection: Connection, cellText?: string) {
+export async function createUntitledNotebook(connection: IConnectionInfo, cellText?: string) {
     const name = `${createUntitledFileName()}.knb`;
     const uri = Uri.file(name).with({ scheme: 'untitled', path: name });
     const contents: KustoNotebook = {
         cells: cellText ? [{ kind: 'code', source: cellText, outputs: [] }] : [],
-        metadata: { ...connection }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        metadata: { ...connection } as any
     };
     contentsForNextUntitledFile.set(uri.fsPath.toString(), contents);
     await commands.executeCommand('vscode.openWith', uri, 'kusto-notebook');

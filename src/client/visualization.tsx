@@ -54,11 +54,28 @@ function getChartType(
     /**
     [1, "Visualization", "{"Visualization":"piechart","Title":null,"XColumn"…"]
     */
-    if (queryPropertiesTable._rows[0][1] !== 'Visualization') {
+    if (
+        queryPropertiesTable._rows[0][1] !== 'Visualization' &&
+        // This is how we get Visualization for AppInsights.
+        !(queryPropertiesTable._rows[0][0] as string).includes('Visualization')
+    ) {
+        return;
+    }
+    let data: { Visualization: string; Title: string } | undefined;
+    try {
+        data = JSON.parse(queryPropertiesTable._rows[0][2]);
+    } catch {
+        //
+    }
+    try {
+        data = data || JSON.parse(queryPropertiesTable._rows[0][0]);
+    } catch {
+        //
+    }
+    if (!data) {
         return;
     }
     try {
-        const data = JSON.parse(queryPropertiesTable._rows[0][2]);
         if (data.Visualization === 'piechart') {
             return { type: 'pie', title: data.Title || '' };
         }
