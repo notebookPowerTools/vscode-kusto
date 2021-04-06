@@ -103,14 +103,29 @@ function renderChart(results: KustoResponseDataSet, ele: HTMLElement) {
         autosize: true
     };
     if (chartType.type === 'pie') {
+        const clonedColumns = results.primaryResults[0].columns.slice();
+        // Last column is assumed to be the one with the values (do a best effort to find the one with the `long` value).
+        const valuesColumnIndex =
+            clonedColumns.reverse().find((item) => item.type === 'long')?.ordinal || clonedColumns.length - 1;
         const pieData: Partial<Plotly.PieData> = {
             type: chartType.type,
             textinfo: 'label+value',
             hoverinfo: 'all',
             labels: results.primaryResults[0]._rows.map((item) => item[0]),
-            values: results.primaryResults[0]._rows.map((item) => item[1])
+            values: results.primaryResults[0]._rows.map((item) => item[valuesColumnIndex])
         } as any;
-        Plotly.newPlot(ele, [pieData], layout);
+
+        // if we have more than 2 columns in the pie chart, we can turn it into a sunburst.
+        if (results.primaryResults[0].columns.length > 2) {
+            const ele1 = ele.appendChild(document.createElement('div'));
+            ele1.style.display = 'inline-block';
+            const ele2 = ele.appendChild(document.createElement('div'));
+            ele2.style.display = 'inline-block';
+            Plotly.newPlot(ele1, [pieData], layout);
+            generateSunburstChart(ele2, results, layout);
+        } else {
+            Plotly.newPlot(ele, [pieData], layout);
+        }
     }
     if (chartType.type === 'time') {
         const sortedData = results.primaryResults[0]._rows.slice();
@@ -198,4 +213,74 @@ function renderChart(results: KustoResponseDataSet, ele: HTMLElement) {
         } as any;
         Plotly.newPlot(ele, [barData], layout);
     }
+}
+
+function generateSunburstChart(ele: HTMLElement, results: KustoResponseDataSet, layout: any) {
+    if (results.primaryResults[0].columns.length <= 2) {
+        return;
+    }
+    const valueColumnIndex = results.primaryResults[0].columns.length - 1;
+    const ids: string[] = [];
+    const labels: string[] = [];
+    const parents: string[] = [];
+    const values: number[] = [];
+
+    // Construct hierarchial data.
+    console.error(results.primaryResults[0]);
+    results.primaryResults[0].columns.forEach((col, index) => {
+        if (valueColumnIndex === index) {
+            return;
+        }
+        if (index === 0) {
+            const labelsAndValues = new Map<string, number>();
+            results.primaryResults[0]._rows.forEach((row) => {
+                const label = row[index].toString();
+                labelsAndValues.set(label, (labelsAndValues.get(label) ?? 0) + row[valueColumnIndex]);
+                console.info('1');
+            });
+
+            labelsAndValues.forEach((value, label) => {
+                ids.push(label);
+                labels.push(label);
+                parents.push('');
+                values.push(value);
+            });
+        } else {
+            const labelsAndValues = new Map<string, { parentLabel: string; value: number; label: string }>();
+            results.primaryResults[0]._rows.forEach((row) => {
+                const parentLabel = Array(index)
+                    .fill(0)
+                    .map((_, i) => row[i].toString())
+                    .join('-');
+                const label = row[index].toString();
+                const value = row[valueColumnIndex];
+                const id = `${parentLabel}-${label}`;
+                if (labelsAndValues.has(id)) {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    labelsAndValues.get(id)!.value += value;
+                } else {
+                    labelsAndValues.set(id, { value, label, parentLabel });
+                }
+            });
+            labelsAndValues.forEach((item, id) => {
+                ids.push(id);
+                labels.push(item.label);
+                parents.push(item.parentLabel);
+                values.push(item.value);
+            });
+        }
+    });
+    const pieData: Partial<Plotly.PieData> = {
+        type: 'sunburst',
+        // textinfo: 'label+value',
+        // hoverinfo: 'all',
+        ids,
+        labels,
+        values,
+        parents,
+        hoverinfo: 'label+value+percent entry',
+        branchvalues: 'total'
+    } as any;
+    console.error(pieData);
+    Plotly.newPlot(ele, [pieData], layout);
 }
