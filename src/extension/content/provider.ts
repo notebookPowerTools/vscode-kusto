@@ -265,12 +265,13 @@ function getNotebookMetadata(editable?: boolean, connection?: IConnectionInfo) {
     return notebookMetadata;
 }
 const contentsForNextUntitledFile = new Map<string, KustoNotebook>();
-export async function createUntitledNotebook(connection: IConnectionInfo, cellText?: string) {
+export async function createUntitledNotebook(connection?: IConnectionInfo, cellText?: string) {
     const name = `${createUntitledFileName()}.knb`;
     const uri = Uri.file(name).with({ scheme: 'untitled', path: name });
     const contents: KustoNotebook = {
-        cells: cellText ? [{ kind: 'code', source: cellText, outputs: [] }] : [],
-        metadata: getNotebookMetadata(false, connection)
+        // We don't want to create an empty notebook (add at least one blank cell)
+        cells: typeof cellText === 'string' ? [{ kind: 'code', source: cellText, outputs: [] }] : [],
+        metadata: getNotebookMetadata(true, connection)
     };
     contentsForNextUntitledFile.set(uri.fsPath.toString(), contents);
     await commands.executeCommand('vscode.openWith', uri, 'kusto-notebook');

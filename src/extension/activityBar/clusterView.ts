@@ -75,6 +75,7 @@ export class ClusterTreeView {
             !dataBaseOrTableNote ||
             (!(dataBaseOrTableNote instanceof DatabaseNode) && !(dataBaseOrTableNote instanceof TableNode))
         ) {
+            await createUntitledNotebook(undefined, '');
             return;
         }
         const connectionInfo =

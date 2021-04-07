@@ -63,7 +63,7 @@
         "commands": [
             {
                 "command": "kusto.createNotebook",
-                "title": "Configure Kusto Notebooks",
+                "title": "Create Kusto Notebook",
                 "category": "Notebook",
                 "icon": "$(notebook)"
             },
@@ -75,7 +75,7 @@
             },
             {
                 "command": "kusto.changeDocumentConnection",
-                "title": "Configure Kusto Cluster & Database for Notebooks",
+                "title": "Configure Kusto Connection",
                 "category": "Notebook",
                 "icon": "$(database)"
             },
@@ -166,8 +166,7 @@
                     "when": "config.noExists"
                 },
                 {
-                    "command": "kusto.createNotebook",
-                    "when": "config.noExists"
+                    "command": "kusto.createNotebook"
                 }
             ],
             "view/title": [
