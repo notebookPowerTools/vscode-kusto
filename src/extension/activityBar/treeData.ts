@@ -171,7 +171,7 @@ export class KustoClusterExplorer implements TreeDataProvider<ITreeData>, IDispo
         const connectionNode = this.connections.find((item) => item.info.id === connection.id);
         if (connectionNode) {
             try {
-                const schema = await fromConnectionInfo(connection).getSchema();
+                const schema = await fromConnectionInfo(connection).getSchema(true);
                 connectionNode.updateSchema(schema);
                 this._onDidChangeTreeData.fire(connectionNode);
             } catch (ex) {

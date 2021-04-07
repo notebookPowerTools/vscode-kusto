@@ -15,7 +15,9 @@ export class AppInsightsConnection extends BaseConnection<AppInsightsConnectionI
         const id = getHash(`${info.appId}:${info.appKey}`);
         return new AppInsightsConnection(
             {
-                displayName: `AppInsights ${info.appId.substring(0, 8)}`,
+                displayName: `AppInsights AppId ${info.appId.substring(0, 8)}${
+                    (''.padEnd(info.appId.length - 8), '*')
+                }`,
                 id,
                 type: 'appInsights'
             },

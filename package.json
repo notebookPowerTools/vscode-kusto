@@ -42,6 +42,7 @@
         "onNotebook:jupyter-notebook",
         "onLanguage:plaintext",
         "onView:kustoExplorer",
+        "onCommand:kusto.createNotebook",
         "onCommand:kusto.executeSelectedQuery",
         "onCommand:kusto.addConnection",
         "onCommand:kusto.removeConnection",
@@ -204,32 +205,32 @@
                 {
                     "command": "kusto.removeConnection",
                     "when": "view == kustoExplorer && viewItem == cluster",
-                    "group": "inline"
+                    "group": "inline@2"
                 },
                 {
                     "command": "kusto.refreshNode",
                     "when": "view == kustoExplorer && viewItem == cluster",
-                    "group": "inline"
+                    "group": "inline@1"
                 },
                 {
                     "command": "kusto.refreshNode",
                     "when": "view == kustoExplorer && viewItem == database",
-                    "group": "inline"
+                    "group": "inline@1"
                 },
                 {
                     "command": "kusto.refreshNode",
                     "when": "view == kustoExplorer && viewItem == table",
-                    "group": "inline"
+                    "group": "inline@1"
                 },
                 {
                     "command": "kusto.createNotebook",
                     "when": "view == kustoExplorer && viewItem == database",
-                    "group": "inline"
+                    "group": "inline@2"
                 },
                 {
                     "command": "kusto.createNotebook",
                     "when": "view == kustoExplorer && viewItem == table",
-                    "group": "inline"
+                    "group": "inline@2"
                 }
             ]
         },
