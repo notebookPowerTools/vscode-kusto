@@ -27,7 +27,8 @@ async function updateKustoCellsOfDocument(document?: NotebookDocument) {
         return;
     }
     await Promise.all(
-        document.cells
+        document
+            .getCells()
             .filter((item) => item.kind === NotebookCellKind.Code)
             .map((item) => updateKustoCells(item.document))
     );

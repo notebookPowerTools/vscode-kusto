@@ -199,7 +199,7 @@ export class ContentProvider implements NotebookContentProvider {
     }
     private async saveAs(uri: Uri, document: NotebookDocument) {
         const notebook: KustoNotebook = {
-            cells: document.cells.map((cell) => {
+            cells: document.getCells().map((cell) => {
                 let outputs: KustoResponseDataSet[] = [];
 
                 if (this._persistOutputs) {

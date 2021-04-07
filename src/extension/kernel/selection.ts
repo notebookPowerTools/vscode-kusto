@@ -4,7 +4,8 @@ import { Kernel } from './kernel';
 export function registerKernelSelection(context: ExtensionContext) {
     const disposable = notebook.onDidChangeActiveNotebookKernel((data) => {
         if (data.kernel instanceof Kernel) {
-            data.document.cells
+            data.document
+                .getCells()
                 .filter((cell) => cell.kind === NotebookCellKind.Code)
                 .forEach((cell) => languages.setTextDocumentLanguage(cell.document, 'kusto'));
 

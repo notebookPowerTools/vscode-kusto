@@ -167,7 +167,7 @@ function getConnectionInfoFromJupyterNotebook(document: NotebookDocument): IConn
     if (!isJupyterNotebook(document)) {
         return;
     }
-    const cell = getJupyterCellWithConnectionInfo(document.cells);
+    const cell = getJupyterCellWithConnectionInfo(document.getCells());
     if (!cell) {
         return;
     }

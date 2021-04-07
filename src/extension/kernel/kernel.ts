@@ -42,11 +42,11 @@ export class Kernel implements NotebookKernel {
     public async executeInteractiveSelection(textEditor: TextEditor): Promise<void> {
         const source = textEditor.document.getText(textEditor.selection);
         let edit = new WorkspaceEdit();
-        edit.replaceNotebookCells(this.document.uri, this.document.cells.length, 0, [
+        edit.replaceNotebookCells(this.document.uri, this.document.cellCount, 0, [
             new NotebookCellData(NotebookCellKind.Code, source.trim(), 'kusto', [], new NotebookCellMetadata())
         ]);
         await workspace.applyEdit(edit);
-        const cell = this.document.cells[this.document.cells.length - 1];
+        const cell = this.document.cellAt[this.document.cellCount - 1];
         const task = notebook.createNotebookCellExecutionTask(cell.notebook.uri, cell.index, this.id);
         if (!task) {
             return;
@@ -122,7 +122,7 @@ export class Kernel implements NotebookKernel {
         if (isKustoInteractive(document)) {
             return;
         }
-        const cells = document.cells.filter(
+        const cells = document.getCells().filter(
             (cell) =>
                 cell.kind === NotebookCellKind.Code &&
                 ranges.some((range) => range.start <= cell.index && cell.index < range.end)
