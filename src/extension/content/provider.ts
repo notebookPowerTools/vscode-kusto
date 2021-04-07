@@ -245,7 +245,7 @@ export class ContentProvider implements NotebookContentProvider {
     }
 }
 
-function getNotebookMetadata(editable?: boolean, connection?: IConnectionInfo) {
+export function getNotebookMetadata(editable?: boolean, connection?: IConnectionInfo) {
     const notebookMetadata: KustoNotebookMetadata = {};
     if (connection) {
         switch (connection.type) {
@@ -264,6 +264,9 @@ function getNotebookMetadata(editable?: boolean, connection?: IConnectionInfo) {
     notebookMetadata.locked = !editable;
     return notebookMetadata;
 }
+export function getConnectionFromNotebookMetadata(document: NotebookDocument) {
+    return document.metadata.custom.connection;
+}
 const contentsForNextUntitledFile = new Map<string, KustoNotebook>();
 export async function createUntitledNotebook(connection?: IConnectionInfo, cellText?: string) {
     const name = `${createUntitledFileName()}.knb`;
@@ -278,6 +281,9 @@ export async function createUntitledNotebook(connection?: IConnectionInfo, cellT
 }
 
 export function updateCustomMetadataWithConnectionInfo(custom: Record<string, unknown>, connection?: IConnectionInfo) {
+    custom.connection = connection ? JSON.parse(JSON.stringify(connection)) : undefined;
+}
+export function getConnectionFromMetadata(custom: Record<string, unknown>, connection?: IConnectionInfo) {
     custom.connection = connection ? JSON.parse(JSON.stringify(connection)) : undefined;
 }
 function createUntitledFileName() {

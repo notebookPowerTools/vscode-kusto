@@ -7,7 +7,7 @@ import { isEqual } from 'lodash';
 import { captureConnectionFromUser } from './management';
 import { AzureAuthenticatedConnection } from './azAuth';
 import { getFromCache, updateCache } from '../../cache';
-import { updateCustomMetadataWithConnectionInfo } from '../../content/provider';
+import { getConnectionFromNotebookMetadata, updateCustomMetadataWithConnectionInfo } from '../../content/provider';
 
 const onDidChangeConnection = new EventEmitter<NotebookDocument | TextDocument>();
 
@@ -135,7 +135,7 @@ export function getConnectionInfoFromDocumentMetadata(
         if (isJupyterNotebook(document)) {
             return getConnectionInfoFromJupyterNotebook(document);
         }
-        return document.metadata.custom as Partial<IConnectionInfo> | undefined;
+        return getConnectionFromNotebookMetadata(document);
     } else {
         return getFromCache(document.uri.toString().toLowerCase()) || {};
     }
