@@ -7,6 +7,7 @@ import { isEqual } from 'lodash';
 import { captureConnectionFromUser } from './management';
 import { AzureAuthenticatedConnection } from './azAuth';
 import { getFromCache, updateCache } from '../../cache';
+import { updateCustomMetadataWithConnectionInfo } from '../../content/provider';
 
 const onDidChangeConnection = new EventEmitter<NotebookDocument | TextDocument>();
 
@@ -196,7 +197,7 @@ async function updateNotebookConnection(document: NotebookDocument, info: IConne
     }
     const edit = new WorkspaceEdit();
     const custom = JSON.parse(JSON.stringify(document.metadata.custom)) || {};
-    Object.assign(custom, info);
+    updateCustomMetadataWithConnectionInfo(custom, info);
     const newMetadata = document.metadata.with({ custom });
     edit.replaceNotebookMetadata(document.uri, newMetadata);
     await workspace.applyEdit(edit);

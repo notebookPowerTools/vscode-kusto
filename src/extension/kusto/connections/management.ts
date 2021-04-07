@@ -93,13 +93,21 @@ async function selectConnection(multiStepInput: MultiStepInput<State>, state: St
     }
 }
 async function addConnection(multiStepInput: MultiStepInput<State>, state: State) {
-    const addCluster = 'Add Cluster Uri';
-    const addAppInsight = 'Add AppInsights';
+    const addCluster = 'Add Azure Data Explorer cluster';
+    const addAppInsight = 'Add Azure Application Insights';
     const value = await multiStepInput
         .showQuickPick({
             items: [
-                { label: addCluster, description: 'Azure Authentication' },
-                { label: addAppInsight, description: 'Connect with Azure SubscriptionId. AppId, AppKey' }
+                {
+                    label: addCluster,
+                    description: 'Authenticate using Azure Identity',
+                    detail: `E.g. https://help.kusto.windows.net`
+                },
+                {
+                    label: addAppInsight,
+                    description: 'Authenticate using AppId, AppKey',
+                    detail: 'https://docs.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview'
+                }
             ],
             matchOnDescription: true,
             matchOnDetail: true,
