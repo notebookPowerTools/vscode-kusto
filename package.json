@@ -2,9 +2,9 @@
     "name": "kusto",
     "displayName": "Kusto Notebooks",
     "description": "Run Kusto Queries in Notebooks",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "engines": {
-        "vscode": "^1.55.0"
+        "vscode": "1.56.0-insider"
     },
     "publisher": "donjayamanne",
     "enableProposedApi": true,

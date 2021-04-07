@@ -34,16 +34,16 @@ This extension is still in preview and a very early build with a long way to go 
 * Limited to VS Code Insiders
 * Launch VS Code with the following command line `code-insiders --enable-proposed-api=donjayamanne.kusto`
 
-# Authentication
-* When running a cell you'll be prompted to entre the cluster name & default database.
-* You'll also be prompted to authenticate against Microsoft, if not provided, then you'll need to manually provide an Auth token
-    * Use the following CLI to generate an Auth Token `az account get-access-token --resource https://<Cluster Name>.kusto.windows.net`
-
 # Roadmap
 * Support for more charts
 * Ability to lock cells (preserve the results and ensure its never lost)
 * Support for plain text files (*.csl/*.kql)
 * & more...
+
+# Thanks to the contributors
+[Joyce Er](https://github.com/joyceerhl)
+[SteVen Batten](https://github.com/sbatten)
+[Peng Lyu](https://github.com/rebornix)
 
 # License
 
