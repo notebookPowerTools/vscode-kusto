@@ -17,7 +17,7 @@ A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marke
 * Please install VS Code Insiders (stable is not yet supported)
 * Install this extension
 * Launch VS Code with the following command line `code-insiders --enable-proposed-api=donjayamanne.kusto`
-* Create a file with extension `*.knb` (or use the command `Create Kust Notebook`)
+* Create a file with extension `*.knb` (or use the command `Create Kusto Notebook`)
 * Use the command `Configure Kusto Connection` to configure the Kusto connection.
 
 # Works with Jupyter Notebooks as well (when using [kqlmagic](https://pypi.org/project/Kqlmagic/))
