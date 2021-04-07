@@ -49,7 +49,7 @@ async function ensureNotebookHasConnectionInfoInternal(
     if (!changeExistingValue && currentInfo && isConnectionValidForKustoQuery(currentInfo)) {
         return currentInfo as IConnectionInfo;
     }
-    if (!isKustoNotebook(document)) {
+    if (!isKustoNotebook(document) && !isJupyterNotebook(document)) {
         return;
     }
     const info = await captureConnectionFromUser(getConnectionInfoFromDocumentMetadata(document));
@@ -59,7 +59,11 @@ async function ensureNotebookHasConnectionInfoInternal(
     if (isEqual(currentInfo, info)) {
         return;
     }
-    await updateNotebookConnection(document, info);
+    if (isKustoNotebook(document)) {
+        await updateNotebookConnection(document, info);
+    } else {
+        await updateCache(document.uri.toString().toLowerCase(), info);
+    }
     return info;
 }
 async function ensureDocumentHasConnectionInfoInternal(
@@ -91,6 +95,7 @@ async function changDocumentConnection(uri?: Uri) {
     if (document) {
         await ensureNotebookHasConnectionInfoInternal(document, true);
     } else {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const textDocument = workspace.textDocuments.find((item) => item.uri.toString() === uri!.toString());
         if (!textDocument) {
             return;
@@ -163,7 +168,6 @@ function getConnectionInfoFromJupyterNotebook(document: NotebookDocument): IConn
         return;
     }
     const cell = getJupyterCellWithConnectionInfo(document.cells);
-
     if (!cell) {
         return;
     }
