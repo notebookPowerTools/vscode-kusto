@@ -90,11 +90,11 @@ export class Kernel implements NotebookKernel {
             }
             task.appendOutput(new NotebookCellOutput(outputItems));
         } catch (ex) {
-            const error: Error = ex;
+            const error: Error | undefined = ex;
             const data = {
-                ename: ex.message || 'Failed to execute query',
-                evalue: ex.evalue || ex['@type'] || '',
-                traceback: [error.stack || format(ex)]
+                ename: error?.name || 'Failed to execute query',
+                evalue: error?.message || '',
+                traceback: [error?.stack || format(ex)]
             };
 
             task.appendOutput(
