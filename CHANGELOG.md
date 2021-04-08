@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.0.8 (7 April 2021)
+
+### Fixes
+1. Ensure *.kql & *.csl files are detected as kusto files.
+
+### Enhancements
+
+1. Support for Application Insights
+1. Better handling of session timeout errors.
+1. Improvements to adding connections (Clusters & AppInsights)
+1. Added language capabilities for plain text kusto files (*.kql, *.csl)
+
 ## 0.0.7 (7 April 2021)
 ### Enhancements
 

@@ -26,6 +26,7 @@ A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marke
 
 # Difference between Kusto Notebooks & Jupyter Notebooks  (with [kqlmagic](https://pypi.org/project/Kqlmagic/))
 * Kusto Notebooks, there are no additional dependencies.
+    * Authentication against Azure is handled by VS Code.
 * With Jupyter Notebooks, you'll need to install Python and the [kqlmagic](https://pypi.org/project/Kqlmagic/) package.
     * You can use Python to further analyze the data.
 
@@ -34,6 +35,8 @@ This extension is still in preview and a very early build with a long way to go 
 * Limited to VS Code Insiders
 * Launch VS Code with the following command line `code-insiders --enable-proposed-api=donjayamanne.kusto`
 
+# Authentication
+* VS Code handles Azure Authentication (if required)
 # Roadmap
 * Support for more charts
 * Ability to lock cells (preserve the results and ensure its never lost)

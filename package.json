@@ -2,7 +2,7 @@
     "name": "kusto",
     "displayName": "Kusto Notebooks",
     "description": "Run Kusto Queries in Notebooks",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "engines": {
         "vscode": "1.56.0-insider"
     },
@@ -106,7 +106,9 @@
                     "csl"
                 ],
                 "extensions": [
-                    ".knb"
+                    ".knb",
+                    ".kql",
+                    ".csl"
                 ],
                 "configuration": "./language-configuration.json"
             }
@@ -148,7 +150,7 @@
             "commandPalette": [
                 {
                     "command": "kusto.changeDocumentConnection",
-                    "when": "notebookViewType == kusto-notebook"
+                    "when": "notebookViewType == kusto-notebook || notebookViewType == jupyter-notebook"
                 },
                 {
                     "command": "kusto.executeSelectedQuery",
@@ -185,7 +187,7 @@
             "editor/title": [
                 {
                     "command": "kusto.changeDocumentConnection",
-                    "when": "notebookViewType == kusto-notebook",
+                    "when": "notebookViewType == kusto-notebook || notebookViewType == jupyter-notebook",
                     "group": "navigation@1"
                 },
                 {
