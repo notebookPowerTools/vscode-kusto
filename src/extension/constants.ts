@@ -6,6 +6,7 @@ export const noop = () => {};
 
 export enum GlobalMementoKeys {
     clusterUris = 'clusterUris',
+    lastUsedConnection = 'lastUsedConnection',
     lastEnteredClusterUri = 'lastEnteredClusterUri',
     lastEnteredDatabase = 'lastEnteredDatabase',
     prefixForClusterSchema = 'prefixForClusterSchema',

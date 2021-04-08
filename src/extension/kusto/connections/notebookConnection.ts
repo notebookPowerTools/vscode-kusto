@@ -8,6 +8,7 @@ import { captureConnectionFromUser } from './management';
 import { AzureAuthenticatedConnection } from './azAuth';
 import { getFromCache, updateCache } from '../../cache';
 import { getConnectionFromNotebookMetadata, updateCustomMetadataWithConnectionInfo } from '../../content/provider';
+import { GlobalMementoKeys } from '../../constants';
 
 const onDidChangeConnection = new EventEmitter<NotebookDocument | TextDocument>();
 
@@ -64,6 +65,7 @@ async function ensureNotebookHasConnectionInfoInternal(
     } else {
         await updateCache(document.uri.toString().toLowerCase(), info);
     }
+    await updateCache(GlobalMementoKeys.lastUsedConnection, info);
     return info;
 }
 async function ensureDocumentHasConnectionInfoInternal(
@@ -82,6 +84,7 @@ async function ensureDocumentHasConnectionInfoInternal(
         return;
     }
     await updateCache(document.uri.toString().toLowerCase(), info);
+    await updateCache(GlobalMementoKeys.lastUsedConnection, info);
     onDidChangeConnection.fire(document);
     return info;
 }
@@ -136,14 +139,27 @@ function triggerJupyterConnectionChanged(notebook: NotebookDocument) {
 export function getConnectionInfoFromDocumentMetadata(
     document: NotebookDocument | TextDocument
 ): Partial<IConnectionInfo> | undefined {
+    // If user manually chose a connection, then use that.
+    let connection = getFromCache<IConnectionInfo>(document.uri.toString().toLowerCase());
+    if (connection) {
+        return connection;
+    }
+    if ('notebook' in document && document.notebook) {
+        document = document.notebook;
+    }
     if ('viewType' in document) {
         if (isJupyterNotebook(document)) {
-            return getConnectionInfoFromJupyterNotebook(document);
+            connection = getConnectionInfoFromJupyterNotebook(document);
+        } else {
+            connection = getConnectionFromNotebookMetadata(document);
         }
-        return getConnectionFromNotebookMetadata(document);
-    } else {
-        return getFromCache(document.uri.toString().toLowerCase()) || {};
     }
+    if (connection && !getFromCache(GlobalMementoKeys.lastUsedConnection)) {
+        // If we have a preferred connection, and user hasn't ever selected a connection (before),
+        // then use current connection as the preferred connection for future notebooks/kusto files.
+        updateCache(GlobalMementoKeys.lastUsedConnection, connection);
+    }
+    return connection || getFromCache(GlobalMementoKeys.lastUsedConnection);
 }
 const kqlMagicConnectionStringStartDelimiter = 'AzureDataExplorer://'.toLowerCase();
 function textDocumentHasJupyterConnectionInfo(textDocument: TextDocument) {

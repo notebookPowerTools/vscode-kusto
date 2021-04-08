@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.0.9 (7 April 2021)
+
+### Enhancements
+
+1. Use the last selected connection for all future notebooks (unless explicitly set by user or defined in metadata).
+
+### Fixes
+1. Port connection metadata from older *.knb notebooks to the new format.
+
 ## 0.0.8 (7 April 2021)
 
 ### Fixes

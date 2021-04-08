@@ -128,7 +128,7 @@ export class ContentProvider implements NotebookContentProvider {
             // Backwards compatibility (for older format of metadata in documents).
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const oldMetadataFormat: { cluster?: string; database?: string } | undefined = notebook.metadata as any;
-            if (connectionInNotebookMetadata && (oldMetadataFormat?.cluster || oldMetadataFormat?.database)) {
+            if (!connectionInNotebookMetadata && (oldMetadataFormat?.cluster || oldMetadataFormat?.database)) {
                 connectionInNotebookMetadata = {
                     ...oldMetadataFormat
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
