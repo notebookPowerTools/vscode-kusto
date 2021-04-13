@@ -45,6 +45,7 @@
         "onCommand:kusto.createNotebook",
         "onCommand:kusto.executeSelectedQuery",
         "onCommand:kusto.addConnection",
+        "onCommand:kusto.exportNotebookAsScript",
         "onCommand:kusto.removeConnection",
         "onCommand:kusto.refreshNode",
         "onCommand:kusto.changeDocumentConnection"
@@ -72,7 +73,13 @@
                 "command": "kusto.executeSelectedQuery",
                 "title": "Execute Selected Query",
                 "category": "Kusto",
-                "icon": "$(notebook)"
+                "icon": "$(play)"
+            },
+            {
+                "command": "kusto.exportNotebookAsScript",
+                "title": "Export Kusto Notebook as Script",
+                "category": "Notebook",
+                "icon": "$(export)"
             },
             {
                 "command": "kusto.changeDocumentConnection",
@@ -153,6 +160,10 @@
                     "when": "notebookViewType == kusto-notebook || notebookViewType == jupyter-notebook"
                 },
                 {
+                    "command": "kusto.exportNotebookAsScript",
+                    "when": "notebookViewType == kusto-notebook"
+                },
+                {
                     "command": "kusto.executeSelectedQuery",
                     "when": "editorLangId == kusto"
                 },
@@ -188,6 +199,11 @@
                 {
                     "command": "kusto.changeDocumentConnection",
                     "when": "notebookViewType == kusto-notebook || notebookViewType == jupyter-notebook",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "kusto.exportNotebookAsScript",
+                    "when": "notebookViewType == kusto-notebook",
                     "group": "navigation@1"
                 },
                 {

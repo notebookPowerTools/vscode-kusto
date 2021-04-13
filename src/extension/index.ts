@@ -11,6 +11,7 @@ import { monitorJupyterCells } from './languageServer/jupyterNotebook';
 import { registerConfigurationListener } from './configuration';
 import { initializeConnectionStorage } from './kusto/connections/storage';
 import { registerInteractiveExperience } from './kernel/interactive';
+import { registerExportCommand } from './content/export';
 
 let client: LanguageClient;
 
@@ -26,6 +27,7 @@ export async function activate(context: ExtensionContext) {
     initialize(context);
     monitorJupyterCells();
     registerInteractiveExperience();
+    registerExportCommand();
 }
 
 export async function deactivate(): Promise<void> {
