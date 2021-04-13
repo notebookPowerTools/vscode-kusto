@@ -73,6 +73,10 @@ async function sendSchemaForDocument(document: NotebookDocument | TextDocument) 
     if ('viewType' in document && !isKustoNotebook(document) && !isJupyterNotebook(document)) {
         return;
     }
+    // If this is a cell in a Jupyter notebook, get the notebook object,
+    if ('notebook' in document && document.notebook && isJupyterNotebook(document.notebook)) {
+        document = document.notebook;
+    }
     const info = getConnectionInfoFromDocumentMetadata(document);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!info || !shouldSendSchemaToLanguageServer(document, info as any)) {
