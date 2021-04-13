@@ -47,7 +47,7 @@ async function exportNotebook(uri?: Uri) {
             source: [
                 '# %pip install kqlmagic # Ensure kqlmagic is installed',
                 '%env KQLMAGIC_LOAD_MODE=silent',
-                '%env KQLMAGIC_CONFIGURATION="show_query_time=False;show_init_banner=False;check_magic_version=False;show_what_new=False;"',
+                '%env KQLMAGIC_CONFIGURATION="show_query_time=False;show_init_banner=False;check_magic_version=False;show_what_new=False;show_conn_info=None"',
                 '%reload_ext Kqlmagic'
             ]
         });
