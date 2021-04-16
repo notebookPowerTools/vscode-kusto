@@ -68,9 +68,7 @@ export class ContentProvider implements NotebookContentProvider {
             new ContentProvider(persistOutputs ?? false),
             {
                 transientOutputs: !persistOutputs,
-                transientMetadata: {
-                    statusMessage: !persistOutputs
-                }
+                transientMetadata: {}
             }
         );
         registerDisposable(disposable);
