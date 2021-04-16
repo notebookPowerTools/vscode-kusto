@@ -57,13 +57,6 @@ export class Kernel implements NotebookKernel {
             return;
         }
         const startTime = Date.now();
-        edit = new WorkspaceEdit();
-        edit.replaceNotebookCellMetadata(
-            cell.notebook.uri,
-            cell.index,
-            cell.metadata.with({ custom: { statusMessage: '' } })
-        );
-        workspace.applyEdit(edit);
         task.start({ startTime });
         task.clearOutput();
         let success = false;
@@ -134,13 +127,6 @@ export class Kernel implements NotebookKernel {
             return;
         }
         const startTime = Date.now();
-        const edit = new WorkspaceEdit();
-        edit.replaceNotebookCellMetadata(
-            cell.notebook.uri,
-            cell.index,
-            cell.metadata.with({ custom: { statusMessage: '' } })
-        );
-        workspace.applyEdit(edit);
         task.start({ startTime });
         task.clearOutput();
         let success = false;
