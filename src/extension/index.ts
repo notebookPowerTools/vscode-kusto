@@ -12,6 +12,7 @@ import { registerConfigurationListener } from './configuration';
 import { initializeConnectionStorage } from './kusto/connections/storage';
 import { registerInteractiveExperience } from './kernel/interactive';
 import { registerExportCommand } from './content/export';
+import { StatusBarProvider } from './kernel/statusbar';
 
 let client: LanguageClient;
 
@@ -19,6 +20,7 @@ export async function activate(context: ExtensionContext) {
     initializeConnectionStorage(context);
     initializeCache(context.globalState);
     KernelProvider.register();
+    StatusBarProvider.register(context);
     registerDisposableRegistry(context);
     ContentProvider.register();
     ClusterTreeView.register();

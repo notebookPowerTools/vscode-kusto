@@ -7,13 +7,13 @@ import {
     NotebookCellMetadata,
     NotebookCellOutput,
     NotebookCellOutputItem,
-    NotebookCellRange,
+    NotebookRange,
     NotebookDocument,
     NotebookKernel,
     TextEditor,
-    Uri,
     workspace,
-    WorkspaceEdit
+    WorkspaceEdit,
+    NotebookKernelPreload
 } from 'vscode';
 import { Client } from '../kusto/client';
 import { getChartType } from '../output/chart';
@@ -28,7 +28,7 @@ export class Kernel implements NotebookKernel {
     public readonly description = 'Execute Kusto Queries';
     public readonly detail = '';
     public readonly isPreferred: boolean = true;
-    public readonly preloads: Uri[] = [];
+    public readonly preloads: NotebookKernelPreload[] = [];
     public readonly supportedLanguages?: string[] = ['kusto'];
     private static interactiveKernel?: Kernel;
     public static get InteractiveKernel() {
@@ -58,8 +58,12 @@ export class Kernel implements NotebookKernel {
         }
         const startTime = Date.now();
         edit = new WorkspaceEdit();
-        edit.replaceNotebookCellMetadata(cell.notebook.uri, cell.index, cell.metadata.with({ statusMessage: '' }));
-        const promise = workspace.applyEdit(edit);
+        edit.replaceNotebookCellMetadata(
+            cell.notebook.uri,
+            cell.index,
+            cell.metadata.with({ custom: { statusMessage: '' } })
+        );
+        workspace.applyEdit(edit);
         task.start({ startTime });
         task.clearOutput();
         let success = false;
@@ -73,18 +77,6 @@ export class Kernel implements NotebookKernel {
                 return task.end();
             }
             success = true;
-            promise.then(() => {
-                const rowCount = results.primaryResults.length ? results.primaryResults[0]._rows.length : undefined;
-                if (rowCount) {
-                    const edit = new WorkspaceEdit();
-                    edit.replaceNotebookCellMetadata(
-                        cell.notebook.uri,
-                        cell.index,
-                        cell.metadata.with({ statusMessage: `${rowCount} records` })
-                    );
-                    workspace.applyEdit(edit);
-                }
-            });
 
             // Dump the primary results table from the list of tables.
             // We already have that information as a seprate property name `primaryResults`.
@@ -115,18 +107,20 @@ export class Kernel implements NotebookKernel {
                 new NotebookCellOutput([new NotebookCellOutputItem('application/x.notebook.error-traceback', data)])
             );
         } finally {
-            task.end({ duration: Date.now() - startTime, success });
+            task.end({ endTime: Date.now(), success });
         }
     }
-    public async executeCellsRequest(document: NotebookDocument, ranges: NotebookCellRange[]): Promise<void> {
+    public async executeCellsRequest(document: NotebookDocument, ranges: NotebookRange[]): Promise<void> {
         if (isKustoInteractive(document)) {
             return;
         }
-        const cells = document.getCells().filter(
-            (cell) =>
-                cell.kind === NotebookCellKind.Code &&
-                ranges.some((range) => range.start <= cell.index && cell.index < range.end)
-        );
+        const cells = document
+            .getCells()
+            .filter(
+                (cell) =>
+                    cell.kind === NotebookCellKind.Code &&
+                    ranges.some((range) => range.start <= cell.index && cell.index < range.end)
+            );
         await Promise.all(cells.map(this.executeCell.bind(this)));
     }
     private async executeCell(cell: NotebookCell): Promise<void> {
@@ -141,8 +135,12 @@ export class Kernel implements NotebookKernel {
         }
         const startTime = Date.now();
         const edit = new WorkspaceEdit();
-        edit.replaceNotebookCellMetadata(cell.notebook.uri, cell.index, cell.metadata.with({ statusMessage: '' }));
-        const promise = workspace.applyEdit(edit);
+        edit.replaceNotebookCellMetadata(
+            cell.notebook.uri,
+            cell.index,
+            cell.metadata.with({ custom: { statusMessage: '' } })
+        );
+        workspace.applyEdit(edit);
         task.start({ startTime });
         task.clearOutput();
         let success = false;
@@ -156,18 +154,6 @@ export class Kernel implements NotebookKernel {
                 return task.end();
             }
             success = true;
-            promise.then(() => {
-                const rowCount = results.primaryResults.length ? results.primaryResults[0]._rows.length : undefined;
-                if (rowCount) {
-                    const edit = new WorkspaceEdit();
-                    edit.replaceNotebookCellMetadata(
-                        cell.notebook.uri,
-                        cell.index,
-                        cell.metadata.with({ statusMessage: `${rowCount} records` })
-                    );
-                    workspace.applyEdit(edit);
-                }
-            });
 
             // Dump the primary results table from the list of tables.
             // We already have that information as a seprate property name `primaryResults`.
@@ -198,7 +184,7 @@ export class Kernel implements NotebookKernel {
                 new NotebookCellOutput([new NotebookCellOutputItem('application/x.notebook.error-traceback', data)])
             );
         } finally {
-            task.end({ duration: Date.now() - startTime, success });
+            task.end({ endTime: Date.now(), success });
         }
     }
 }
