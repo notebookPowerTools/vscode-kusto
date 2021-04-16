@@ -1,6 +1,6 @@
 import { notebook, NotebookDocument, TextEditor, Uri, ViewColumn, window } from 'vscode';
 import { commands } from 'vscode';
-import { Kernel } from '../kernel/kernel';
+import { KernelProvider } from '../kernel/provider';
 import { isKustoInteractive } from '../kernel/provider';
 import { isKustoFile, registerDisposable } from '../utils';
 
@@ -21,7 +21,7 @@ async function executeSelectedQuery(editor: TextEditor) {
     }
     await createInteractiveWindow();
     // Still hackish, need to wait till this `Kernel.InteractiveKernel` is set (via a promise or the like).
-    await Kernel.InteractiveKernel?.executeInteractiveSelection(editor);
+    await KernelProvider.InteractiveKernel?.executeInteractiveSelection(editor);
 }
 let interactiveNotebook: NotebookDocument | undefined;
 export async function createInteractiveWindow() {
