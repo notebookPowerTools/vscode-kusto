@@ -19,7 +19,7 @@ let client: LanguageClient;
 export async function activate(context: ExtensionContext) {
     initializeConnectionStorage(context);
     initializeCache(context.globalState);
-    KernelProvider.register();
+    KernelProvider.register(context);
     StatusBarProvider.register(context);
     registerDisposableRegistry(context);
     ContentProvider.register();

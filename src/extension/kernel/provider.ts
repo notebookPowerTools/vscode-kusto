@@ -12,12 +12,14 @@ import {
     TextEditor,
     workspace,
     WorkspaceEdit,
-    NotebookController
+    NotebookController,
+    ExtensionContext,
+    Disposable
 } from 'vscode';
 import { Client } from '../kusto/client';
 import { getChartType } from '../output/chart';
 import { createPromiseFromToken } from '../utils';
-    
+
 export class KernelProvider {
     private static interactiveKernel?: InteractiveKernel;
 
@@ -25,35 +27,38 @@ export class KernelProvider {
         return KernelProvider.interactiveKernel;
     }
 
-    public static register() {
+    public static register(context: ExtensionContext) {
         const kernel = new Kernel();
-        const controller = notebook.createNotebookController({
+        const interactiveKernel = new InteractiveKernel();
+        KernelProvider.interactiveKernel = interactiveKernel;
+
+        context.subscriptions.push(kernel, interactiveKernel);
+    }
+}
+
+export class Kernel extends Disposable {
+    controller: NotebookController;
+    constructor() {
+        super(() => {
+            this.dispose();
+        });
+        this.controller = notebook.createNotebookController({
             id: 'kusto',
             label: 'Kusto',
             description: 'Execute Kusto Queries',
             selector: { viewType: 'kusto-notebook' },
-            supportedLanguages:['kusto'],
-            executeHandler: kernel.execute
-        });
-        controller.isPreferred = true;
-
-        const interactiveKernel = new InteractiveKernel();
-        const interactiveController = notebook.createNotebookController({
-            id: 'kusto-interactive',
-            label: 'Kusto Interactive',
-            description: 'Execute Kusto Queries in Interactive Window',
-            selector: { viewType: 'kusto-interactive' },
             supportedLanguages: ['kusto'],
-            executeHandler: interactiveKernel.execute
+            executeHandler: this.execute.bind(this)
         });
-        interactiveController.isPreferred = true;
-        interactiveKernel.controller = interactiveController;
-        KernelProvider.interactiveKernel = interactiveKernel;
+        this.controller.interruptHandler = this.interrupt;
+        this.controller.isPreferred = true;
     }
-}
 
-export class Kernel {
-    constructor() {}
+    dispose() {
+        this.controller.dispose();
+    }
+
+    interrupt() {}
 
     public execute(cells: NotebookCell[], controller: NotebookController) {
         const document = cells[0]?.notebook;
@@ -66,7 +71,9 @@ export class Kernel {
             return;
         }
 
-        cells.forEach(cell => {
+        // states per document
+
+        cells.forEach((cell) => {
             this.executeCell(cell, controller);
         });
     }
@@ -142,11 +149,28 @@ export class Kernel {
     }
 }
 
-export class InteractiveKernel {
-    controller?: NotebookController;
-
-    public execute(cells: NotebookCell[], controller: NotebookController) {
+export class InteractiveKernel extends Disposable {
+    controller: NotebookController;
+    constructor() {
+        super(() => {
+            this.dispose();
+        });
+        this.controller = notebook.createNotebookController({
+            id: 'kusto-interactive',
+            label: 'Kusto Interactive',
+            description: 'Execute Kusto Queries in Interactive Window',
+            selector: { viewType: 'kusto-interactive' },
+            supportedLanguages: ['kusto'],
+            executeHandler: this.execute
+        });
+        this.controller.isPreferred = true;
     }
+
+    dispose() {
+        this.controller.dispose();
+    }
+
+    public execute(cells: NotebookCell[], controller: NotebookController) {}
 
     public async executeInteractiveSelection(textEditor: TextEditor): Promise<void> {
         const interactiveNotebook = notebook.notebookDocuments.find(isKustoInteractive);
@@ -233,7 +257,7 @@ export class InteractiveKernel {
                 new NotebookCellOutput([new NotebookCellOutputItem('application/x.notebook.error-traceback', data)])
             );
         } finally {
-            task.end({  endTime: Date.now(), success });
+            task.end({ endTime: Date.now(), success });
         }
     }
 }

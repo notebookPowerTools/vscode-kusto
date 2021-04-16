@@ -1,5 +1,5 @@
 import { ExtensionContext, languages, notebook, NotebookCellKind, workspace, WorkspaceEdit } from 'vscode';
-import { Kernel } from './kernel';
+import { Kernel } from './provider';
 
 export function registerKernelSelection(context: ExtensionContext) {
     const disposable = notebook.onDidChangeActiveNotebookKernel((data) => {
