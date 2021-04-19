@@ -13,7 +13,7 @@ export class StatusBarProvider implements NotebookCellStatusBarItemProvider {
     static register(context: ExtensionContext) {
         context.subscriptions.push(
             notebook.registerNotebookCellStatusBarItemProvider(
-                { viewType: ['kusto-notebook', 'kusto-interactive'] },
+                [{ viewType: 'kusto-notebook' }, { viewType: 'kusto-interactive' }],
                 new StatusBarProvider()
             )
         );
