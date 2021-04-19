@@ -42,16 +42,17 @@ export class Kernel extends Disposable {
         super(() => {
             this.dispose();
         });
-        this.controller = notebook.createNotebookController({
-            id: 'kusto',
-            label: 'Kusto',
-            description: 'Execute Kusto Queries',
-            selector: { viewType: 'kusto-notebook' },
-            supportedLanguages: ['kusto'],
-            executeHandler: this.execute.bind(this)
-        });
-        this.controller.interruptHandler = this.interrupt;
+        this.controller = notebook.createNotebookController(
+            'kusto',
+            { viewType: 'kusto-notebook' },
+            'Kusto',
+            this.execute.bind(this),
+            []
+        );
+        this.controller.supportedLanguages = ['kusto'];
+        this.controller.description = 'Execute Kusto Queries';
         this.controller.isPreferred = true;
+        // this.controller.interruptHandler = this.interrupt.bind(this);
     }
 
     dispose() {
@@ -155,14 +156,16 @@ export class InteractiveKernel extends Disposable {
         super(() => {
             this.dispose();
         });
-        this.controller = notebook.createNotebookController({
-            id: 'kusto-interactive',
-            label: 'Kusto Interactive',
-            description: 'Execute Kusto Queries in Interactive Window',
-            selector: { viewType: 'kusto-interactive' },
-            supportedLanguages: ['kusto'],
-            executeHandler: this.execute
-        });
+
+        this.controller = notebook.createNotebookController(
+            'kusto-interactive',
+            { viewType: 'kusto-interactive' },
+            'Kusto Interactive',
+            this.execute.bind(this),
+            []
+        );
+        this.controller.supportedLanguages = ['kusto'];
+        this.controller.description = 'Execute Kusto Queries in Interactive Window';
         this.controller.isPreferred = true;
     }
 
