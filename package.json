@@ -310,7 +310,7 @@
         "lint": "eslint src --ext ts && eslint src --ext tsx && eslint build --ext js",
         "lint-format": "npx prettier 'src/**/*.ts*' --check && npx prettier 'build/**/*.js' --check",
         "watch": "tsc -watch -p ./",
-        "package": "vsce package -o kusto-notebooks.vsix",
+        "package": "vsce package --yarn -o kusto-notebooks.vsix",
         "test": "node ./out/test/runTest.js",
         "prettier-fix": "prettier 'src/**/*.ts*' --write && prettier 'build/**/*.js' --write",
         "download-api": "vscode-dts dev",
