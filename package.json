@@ -318,7 +318,6 @@
         "postinstall": "npm run download-api"
     },
     "dependencies": {
-        "@fluentui/react": "^7.150.0",
         "@kusto/monaco-kusto": "^3.2.5",
         "ag-grid-community": "^25.1.0",
         "ag-grid-react": "^25.1.0",
@@ -338,7 +337,6 @@
         "vscode-uri": "^3.0.2"
     },
     "devDependencies": {
-        "@msrvida/fluentui-react-cdn-typings": "1",
         "@types/glob": "^7.1.1",
         "@types/lodash": "^4.14.158",
         "@types/mocha": "^7.0.2",
@@ -351,7 +349,6 @@
         "@typescript-eslint/eslint-plugin": "^3.1.0",
         "@typescript-eslint/parser": "^3.1.0",
         "cache-loader": "^4.1.0",
-        "canvas": "^2.6.0",
         "concurrently": "^5.2.0",
         "copy-webpack-plugin": "^6.0.2",
         "css-loader": "^3.5.3",
