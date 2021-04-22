@@ -4,9 +4,6 @@ import {
     Uri,
     notebook,
     NotebookCell,
-    NotebookCellData,
-    NotebookCellKind,
-    NotebookCellMetadata,
     NotebookCellOutput,
     NotebookCellOutputItem,
     TextEditor,
@@ -29,10 +26,9 @@ export class KernelProvider {
 
     public static register(context: ExtensionContext) {
         const kernel = new Kernel();
-        const interactiveKernel = new InteractiveKernel();
-        KernelProvider.interactiveKernel = interactiveKernel;
-
-        context.subscriptions.push(kernel, interactiveKernel);
+        // const interactiveKernel = new InteractiveKernel();
+        // KernelProvider.interactiveKernel = interactiveKernel;
+        context.subscriptions.push(kernel);
     }
 }
 
@@ -58,8 +54,6 @@ export class Kernel extends Disposable {
     dispose() {
         this.controller.dispose();
     }
-
-    interrupt() {}
 
     public execute(cells: NotebookCell[], controller: NotebookController) {
         const document = cells[0]?.notebook;
@@ -173,7 +167,9 @@ export class InteractiveKernel extends Disposable {
         this.controller.dispose();
     }
 
-    public execute(cells: NotebookCell[], controller: NotebookController) {}
+    public execute(_cells: NotebookCell[], _controller: NotebookController) {
+        //
+    }
 
     public async executeInteractiveSelection(textEditor: TextEditor): Promise<void> {
         const interactiveNotebook = notebook.notebookDocuments.find(isKustoInteractive);
@@ -187,9 +183,9 @@ export class InteractiveKernel extends Disposable {
 
         const source = textEditor.document.getText(textEditor.selection);
         let edit = new WorkspaceEdit();
-        edit.replaceNotebookCells(interactiveNotebook.uri, interactiveNotebook.cellCount, 0, [
-            new NotebookCellData(NotebookCellKind.Code, source.trim(), 'kusto', [], new NotebookCellMetadata())
-        ]);
+        // edit.replaceNotebookCells(interactiveNotebook.uri, interactiveNotebook.cellCount, 0, [
+        //     new NotebookCellData(NotebookCellKind.Code, source.trim(), 'kusto', [], new NotebookCellMetadata())
+        // ]);
         await workspace.applyEdit(edit);
         const cell = interactiveNotebook.cellAt[interactiveNotebook.cellCount - 1];
         const task = this.controller.createNotebookCellExecutionTask(cell);

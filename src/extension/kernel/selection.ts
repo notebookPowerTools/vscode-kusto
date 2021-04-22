@@ -1,32 +1,32 @@
-import { ExtensionContext, languages, notebook, NotebookCellKind, workspace, WorkspaceEdit } from 'vscode';
-import { Kernel } from './provider';
+// import { ExtensionContext, languages, notebook, NotebookCellKind, workspace, WorkspaceEdit } from 'vscode';
+// import { Kernel } from './provider';
 
-export function registerKernelSelection(context: ExtensionContext) {
-    const disposable = notebook.onDidChangeActiveNotebookKernel((data) => {
-        if (data.kernel instanceof Kernel) {
-            data.document
-                .getCells()
-                .filter((cell) => cell.kind === NotebookCellKind.Code)
-                .forEach((cell) => languages.setTextDocumentLanguage(cell.document, 'kusto'));
+// export function registerKernelSelection(context: ExtensionContext) {
+//     const disposable = notebook.onDidChangeActiveNotebookKernel((data) => {
+//         if (data.kernel instanceof Kernel) {
+//             data.document
+//                 .getCells()
+//                 .filter((cell) => cell.kind === NotebookCellKind.Code)
+//                 .forEach((cell) => languages.setTextDocumentLanguage(cell.document, 'kusto'));
 
-            const edit = new WorkspaceEdit();
-            edit.replaceNotebookMetadata(
-                data.document.uri,
-                data.document.metadata.with({
-                    custom: {
-                        metadata: {
-                            kernelspec: { name: 'kusto', display_name: 'Kusto' },
-                            language_info: {
-                                name: 'kusto',
-                                file_extension: '.csl'
-                            }
-                        }
-                    }
-                })
-            );
-            workspace.applyEdit(edit);
-        }
-    });
+//             const edit = new WorkspaceEdit();
+//             edit.replaceNotebookMetadata(
+//                 data.document.uri,
+//                 data.document.metadata.with({
+//                     custom: {
+//                         metadata: {
+//                             kernelspec: { name: 'kusto', display_name: 'Kusto' },
+//                             language_info: {
+//                                 name: 'kusto',
+//                                 file_extension: '.csl'
+//                             }
+//                         }
+//                     }
+//                 })
+//             );
+//             workspace.applyEdit(edit);
+//         }
+//     });
 
-    context.subscriptions.push(disposable);
-}
+//     context.subscriptions.push(disposable);
+// }

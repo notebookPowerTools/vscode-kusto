@@ -9,7 +9,6 @@ import {
     NotebookCellKind,
     NotebookCellMetadata,
     NotebookCellOutput,
-    NotebookCommunication,
     NotebookContentProvider,
     NotebookData,
     NotebookDocument,
@@ -68,13 +67,13 @@ export class ContentProvider implements NotebookContentProvider {
             new ContentProvider(persistOutputs ?? false),
             {
                 transientOutputs: !persistOutputs,
-                transientMetadata: {}
+                transientDocumentMetadata: {}
             }
         );
         registerDisposable(disposable);
         disposable = notebook.registerNotebookContentProvider('kusto-interactive', new ContentProvider(false), {
             transientOutputs: true,
-            transientMetadata: {
+            transientDocumentMetadata: {
                 custom: true,
                 editable: true,
                 inputCollapsed: true,
@@ -82,9 +81,6 @@ export class ContentProvider implements NotebookContentProvider {
             }
         });
         registerDisposable(disposable);
-    }
-    public async resolveNotebook(_document: NotebookDocument, _webview: NotebookCommunication): Promise<void> {
-        // noop.
     }
     public async openNotebook(
         uri: Uri,
