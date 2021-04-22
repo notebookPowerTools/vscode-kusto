@@ -64,7 +64,7 @@ export class AzureAuthenticatedConnection extends BaseConnection<AzureAuthentica
         return window.showInputBox({
             ignoreFocusOut: true,
             placeHolder: '',
-            title: 'Enter Access Token'
+            prompt: 'Enter Access Token'
         });
     }
 }
