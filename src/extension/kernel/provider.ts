@@ -40,29 +40,25 @@ export class Kernel extends Disposable {
         });
         this.controller = notebook.createNotebookController(
             'kusto',
-            { viewType: 'kusto-notebook' },
+            'kusto-notebook',
             'Kusto',
             this.execute.bind(this),
-            []
+            [
+                {
+                    uri: Uri.file('/Users/donjayamanne/Desktop/Development/vsc/vscode-kusto/one.js')
+                }
+            ]
         );
         this.controller.supportedLanguages = ['kusto'];
         this.controller.description = 'Execute Kusto Queries';
-        this.controller.isPreferred = true;
-        // this.controller.interruptHandler = this.interrupt.bind(this);
     }
 
     dispose() {
         this.controller.dispose();
     }
 
-    public execute(cells: NotebookCell[], controller: NotebookController) {
-        const document = cells[0]?.notebook;
-
-        if (!document) {
-            return;
-        }
-
-        if (isKustoInteractive(document)) {
+    public execute(cells: NotebookCell[], notebook: NotebookDocument, controller: NotebookController) {
+        if (isKustoInteractive(notebook)) {
             return;
         }
 
@@ -153,21 +149,20 @@ export class InteractiveKernel extends Disposable {
 
         this.controller = notebook.createNotebookController(
             'kusto-interactive',
-            { viewType: 'kusto-interactive' },
+            'kusto-interactive',
             'Kusto Interactive',
             this.execute.bind(this),
             []
         );
         this.controller.supportedLanguages = ['kusto'];
         this.controller.description = 'Execute Kusto Queries in Interactive Window';
-        this.controller.isPreferred = true;
     }
 
     dispose() {
         this.controller.dispose();
     }
 
-    public execute(_cells: NotebookCell[], _controller: NotebookController) {
+    public execute(_cells: NotebookCell[], _document: NotebookDocument, _controller: NotebookController) {
         //
     }
 
