@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.9 (10 May 2021)
+
+### Enhancements
+
+1. Update to use latest VS Code API.
+
 ## 0.0.9 (7 April 2021)
 
 ### Enhancements

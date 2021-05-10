@@ -25,6 +25,7 @@ import { debug, isUntitledFile, registerDisposable } from '../utils';
 import { IConnectionInfo } from '../kusto/connections/types';
 import { AzureAuthenticatedConnection } from '../kusto/connections/azAuth';
 import { getCachedConnections } from '../kusto/connections/storage';
+import { getConnectionInfoFromDocumentMetadata } from '../kusto/connections/notebookConnection';
 
 type KustoCellMetadata = {
     locked?: boolean;
@@ -101,7 +102,7 @@ export class ContentProvider implements NotebookContentProvider {
             }
             const cells = notebook.cells.map((item) => {
                 const outputs: NotebookCellOutput[] = item.outputs.map(getCellOutput);
-                const locked = item.metadata?.locked === true;
+                const locked = false; //item.metadata?.locked === true;
                 const metadata = new NotebookCellMetadata().with({
                     editable: !locked,
                     inputCollapsed: item.metadata?.inputCollapsed,
@@ -144,9 +145,9 @@ export class ContentProvider implements NotebookContentProvider {
                 updateCustomMetadataWithConnectionInfo(custom, connection);
             }
             let metadata = new NotebookDocumentMetadata().with({
-                cellEditable: !notebook.metadata?.locked,
+                cellEditable: true, // !notebook.metadata?.locked,
                 cellHasExecutionOrder: false,
-                editable: !notebook.metadata?.locked,
+                editable: true, //!notebook.metadata?.locked,
                 trusted: true,
                 custom
             });
@@ -220,9 +221,9 @@ export class ContentProvider implements NotebookContentProvider {
                 if (cell.metadata.outputCollapsed === true) {
                     cellMetadata.outputCollapsed = true;
                 }
-                if (cell.metadata.editable === false) {
-                    cellMetadata.locked = true;
-                }
+                // if (cell.metadata.editable === false) {
+                cellMetadata.locked = true;
+                // }
                 if (Object.keys(cellMetadata).length) {
                     kustoCell.metadata = cellMetadata;
                 }
@@ -230,8 +231,9 @@ export class ContentProvider implements NotebookContentProvider {
             })
         };
 
-        if (!document.metadata.editable || Object.keys(document.metadata.custom.connection || {}).length) {
-            notebook.metadata = getNotebookMetadata(document.metadata.editable, document.metadata.custom.connection);
+        const connection = document.metadata.custom?.connection || getConnectionInfoFromDocumentMetadata(document);
+        if (!document.metadata.editable || (connection && Object.keys(connection).length)) {
+            notebook.metadata = getNotebookMetadata(document.metadata.editable, connection);
         }
 
         const content = Buffer.from(JSON.stringify(notebook, undefined, 4));
@@ -259,7 +261,7 @@ export function getNotebookMetadata(editable?: boolean, connection?: IConnection
     return notebookMetadata;
 }
 export function getConnectionFromNotebookMetadata(document: NotebookDocument) {
-    return document.metadata.custom.connection;
+    return document.metadata.custom?.connection;
 }
 const contentsForNextUntitledFile = new Map<string, KustoNotebook>();
 export async function createUntitledNotebook(connection?: IConnectionInfo, cellText?: string) {

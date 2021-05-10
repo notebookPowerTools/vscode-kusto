@@ -2,9 +2,9 @@
     "name": "kusto",
     "displayName": "Kusto Notebooks",
     "description": "Run Kusto Queries in Notebooks",
-    "version": "0.0.11",
+    "version": "0.0.12",
     "engines": {
-        "vscode": "1.56.0-insider"
+        "vscode": "1.57.0-insider"
     },
     "publisher": "donjayamanne",
     "enableProposedApi": true,
@@ -345,7 +345,7 @@
         "@types/react-dom": "16.9.8",
         "@types/uuid": "^8.0.0",
         "@types/vscode": "^1.54.0",
-        "@types/vscode-notebook-renderer": "^1.55.0",
+        "@types/vscode-notebook-renderer": "^1.57.0",
         "@typescript-eslint/eslint-plugin": "^3.1.0",
         "@typescript-eslint/parser": "^3.1.0",
         "cache-loader": "^4.1.0",

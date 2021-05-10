@@ -24,7 +24,7 @@ import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import { CellDoubleClickedEvent, ColDef, RowSelectedEvent } from 'ag-grid-community';
 
-const notebookApi = acquireNotebookRendererApi('kusto-notebook-renderer-table');
+const notebookApi = acquireNotebookRendererApi();
 
 notebookApi.onDidCreateOutput(renderOutput);
 

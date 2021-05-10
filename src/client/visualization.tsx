@@ -17,7 +17,7 @@ import type * as PlotlyType from 'plotly.js';
 const Plotly: typeof PlotlyType = require('plotly.js/dist/plotly');
 // const Plotly: typeof PlotlyType = require('plotly.js');
 
-const notebookApi = acquireNotebookRendererApi('kusto-notebook-renderer-viz');
+const notebookApi = acquireNotebookRendererApi();
 
 notebookApi.onDidCreateOutput(renderOutput);
 

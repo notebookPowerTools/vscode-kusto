@@ -43,11 +43,7 @@ export class Kernel extends Disposable {
             'kusto-notebook',
             'Kusto',
             this.execute.bind(this),
-            [
-                {
-                    uri: Uri.file('/Users/donjayamanne/Desktop/Development/vsc/vscode-kusto/one.js')
-                }
-            ]
+            []
         );
         this.controller.supportedLanguages = ['kusto'];
         this.controller.description = 'Execute Kusto Queries';

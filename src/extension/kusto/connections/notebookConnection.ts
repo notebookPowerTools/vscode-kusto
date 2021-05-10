@@ -46,7 +46,7 @@ async function ensureNotebookHasConnectionInfoInternal(
     document: NotebookDocument,
     changeExistingValue = false
 ): Promise<IConnectionInfo | undefined> {
-    const currentInfo = getConnectionInfoFromDocumentMetadata(document);
+    const currentInfo = getConnectionInfoFromDocumentMetadata(document, changeExistingValue);
     if (!changeExistingValue && currentInfo && isConnectionValidForKustoQuery(currentInfo)) {
         return currentInfo as IConnectionInfo;
     }
@@ -55,9 +55,6 @@ async function ensureNotebookHasConnectionInfoInternal(
     }
     const info = await captureConnectionFromUser(getConnectionInfoFromDocumentMetadata(document));
     if (!info || !isConnectionValidForKustoQuery(info)) {
-        return;
-    }
-    if (isEqual(currentInfo, info)) {
         return;
     }
     if (isKustoNotebook(document)) {
@@ -137,7 +134,8 @@ function triggerJupyterConnectionChanged(notebook: NotebookDocument) {
     timeout = setTimeout(() => onDidChangeConnection.fire(notebook), 500);
 }
 export function getConnectionInfoFromDocumentMetadata(
-    document: NotebookDocument | TextDocument
+    document: NotebookDocument | TextDocument,
+    ignoreCache = false
 ): Partial<IConnectionInfo> | undefined {
     // If user manually chose a connection, then use that.
     let connection = getFromCache<IConnectionInfo>(document.uri.toString().toLowerCase());
@@ -158,6 +156,9 @@ export function getConnectionInfoFromDocumentMetadata(
         // If we have a preferred connection, and user hasn't ever selected a connection (before),
         // then use current connection as the preferred connection for future notebooks/kusto files.
         updateCache(GlobalMementoKeys.lastUsedConnection, connection);
+    }
+    if (ignoreCache) {
+        return connection;
     }
     return connection || getFromCache(GlobalMementoKeys.lastUsedConnection);
 }
