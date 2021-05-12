@@ -12,14 +12,14 @@ export class StatusBarProvider implements NotebookCellStatusBarItemProvider {
     protected contructor() {}
     static register(context: ExtensionContext) {
         context.subscriptions.push(
-            notebook.registerNotebookCellStatusBarItemProvider(
-                [{ viewType: 'kusto-notebook' }, { viewType: 'kusto-interactive' }],
-                new StatusBarProvider()
-            )
+            notebook.registerNotebookCellStatusBarItemProvider('kusto-notebook', new StatusBarProvider())
+        );
+        context.subscriptions.push(
+            notebook.registerNotebookCellStatusBarItemProvider('kusto-interactive', new StatusBarProvider())
         );
     }
 
-    provideCellStatusBarItems(cell: NotebookCell, token: CancellationToken) {
+    provideCellStatusBarItems(cell: NotebookCell, _token: CancellationToken) {
         if (cell.outputs.length) {
             const firstOutput = cell.outputs[0];
             const outputItem = firstOutput.outputs[0];

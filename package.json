@@ -2,7 +2,7 @@
     "name": "kusto",
     "displayName": "Kusto Notebooks",
     "description": "Run Kusto Queries in Notebooks",
-    "version": "0.0.12",
+    "version": "0.0.14",
     "engines": {
         "vscode": "1.57.0-insider"
     },
@@ -252,7 +252,7 @@
                 }
             ]
         },
-        "notebookProvider": [
+        "notebooks": [
             {
                 "viewType": "kusto-notebook",
                 "displayName": "Kusto Notebook",

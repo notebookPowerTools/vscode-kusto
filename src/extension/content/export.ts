@@ -93,7 +93,7 @@ async function exportNotebook(uri?: Uri) {
 }
 
 function convertCell(cell: NotebookCell): string {
-    return cell.kind === NotebookCellKind.Markdown ? convertMarkdownCell(cell) : convertCodeCell(cell);
+    return cell.kind === NotebookCellKind.Markup ? convertMarkdownCell(cell) : convertCodeCell(cell);
 }
 function convertMarkdownCell(cell: NotebookCell): string {
     return cell.document
@@ -107,9 +107,7 @@ function convertCodeCell(cell: NotebookCell): string {
 }
 
 function convertCellToJupyter(cell: NotebookCell): IMarkdownCell | ICodeCell {
-    return cell.kind === NotebookCellKind.Markdown
-        ? convertMarkdownCellToJupyter(cell)
-        : convertCodeCellToJupyter(cell);
+    return cell.kind === NotebookCellKind.Markup ? convertMarkdownCellToJupyter(cell) : convertCodeCellToJupyter(cell);
 }
 function convertMarkdownCellToJupyter(cell: NotebookCell): IMarkdownCell {
     const lines = cell.document.getText().split(/\r?\n/g);

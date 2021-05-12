@@ -108,7 +108,7 @@ export class ContentProvider implements NotebookContentProvider {
                     inputCollapsed: item.metadata?.inputCollapsed,
                     outputCollapsed: item.metadata?.outputCollapsed
                 });
-                const kind = item.kind === 'code' ? NotebookCellKind.Code : NotebookCellKind.Markdown;
+                const kind = item.kind === 'code' ? NotebookCellKind.Code : NotebookCellKind.Markup;
                 return new NotebookCellData(
                     kind,
                     item.source,
