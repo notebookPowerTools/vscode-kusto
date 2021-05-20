@@ -31,7 +31,10 @@ function renderOutput(request: NotebookOutputEventParams) {
         style.type = 'text/css';
         style.media = 'screen';
         style.textContent = `
-            .ag-root-wrapper div {
+            .ag-cell,
+            .ag-header-cell,
+            .ag-header-container,
+            .ag-header-viewport {
                 overflow-x: hidden !important;
             }
         `;
