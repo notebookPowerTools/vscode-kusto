@@ -34,8 +34,18 @@ notebookApi.onDidCreateOutput(renderOutput);
  */
 function renderOutput(request: NotebookOutputEventParams) {
     try {
+        let style = document.createElement('style');
+        style.type = 'text/css';
+        style.media = 'screen';
+        style.textContent = `
+            .ag-root-wrapper div {
+                overflow-x: hidden !important;
+            }
+        `;
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         renderDataTable(request.value as any, request.element);
+        request.element.appendChild(style);
     } catch (ex) {
         console.error(`Failed to render output ${JSON.stringify(request.value)}`, ex);
     }

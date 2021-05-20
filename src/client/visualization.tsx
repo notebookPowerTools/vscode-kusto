@@ -27,8 +27,18 @@ notebookApi.onDidCreateOutput(renderOutput);
  */
 function renderOutput(request: NotebookOutputEventParams) {
     try {
+        let style = document.createElement('style');
+        style.type = 'text/css';
+        style.media = 'screen';
+        style.textContent = `
+            .ag-root-wrapper div {
+                overflow-x: hidden !important;
+            }
+        `;
+    
         request.element.style.backgroundColor = 'white';
         renderChart(request.value as any, request.element);
+        request.element.appendChild(style);
     } catch (ex) {
         console.error(`Failed to render output ${JSON.stringify(request.value)}`, ex);
     }

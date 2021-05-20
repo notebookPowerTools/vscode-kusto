@@ -252,7 +252,7 @@
                 }
             ]
         },
-        "notebookProvider": [
+        "notebooks": [
             {
                 "viewType": "kusto-notebook",
                 "displayName": "Kusto Notebook",
