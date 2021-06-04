@@ -1,8 +1,7 @@
-import { format } from 'util';
 import {
     NotebookDocument,
     Uri,
-    notebook,
+    notebooks,
     NotebookCell,
     NotebookCellOutput,
     NotebookCellOutputItem,
@@ -38,7 +37,7 @@ export class Kernel extends Disposable {
         super(() => {
             this.dispose();
         });
-        this.controller = notebook.createNotebookController(
+        this.controller = notebooks.createNotebookController(
             'kusto',
             'kusto-notebook',
             'Kusto',
@@ -46,6 +45,7 @@ export class Kernel extends Disposable {
             []
         );
         this.controller.supportedLanguages = ['kusto'];
+        this.controller.supportsExecutionOrder = true;
         this.controller.description = 'Execute Kusto Queries';
     }
 
@@ -66,17 +66,16 @@ export class Kernel extends Disposable {
     }
 
     private async executeCell(cell: NotebookCell, controller: NotebookController): Promise<void> {
-        const task = controller.createNotebookCellExecutionTask(cell);
+        const task = controller.createNotebookCellExecution(cell);
         const client = await Client.create(cell.notebook);
         if (!client) {
-            task.end();
+            task.end(false);
             return;
         }
-        const startTime = Date.now();
         const edit = new WorkspaceEdit();
-        edit.replaceNotebookCellMetadata(cell.notebook.uri, cell.index, cell.metadata.with({ statusMessage: '' }));
+        edit.replaceNotebookCellMetadata(cell.notebook.uri, cell.index, { statusMessage: '' });
         const promise = workspace.applyEdit(edit);
-        task.start({ startTime });
+        task.start(Date.now());
         task.clearOutput();
         let success = false;
         try {
@@ -86,18 +85,16 @@ export class Kernel extends Disposable {
             ]);
             console.log(results);
             if (task.token.isCancellationRequested || !results) {
-                return task.end();
+                return task.end(success);
             }
             success = true;
             promise.then(() => {
                 const rowCount = results.primaryResults.length ? results.primaryResults[0]._rows.length : undefined;
                 if (rowCount) {
                     const edit = new WorkspaceEdit();
-                    edit.replaceNotebookCellMetadata(
-                        cell.notebook.uri,
-                        cell.index,
-                        cell.metadata.with({ statusMessage: `${rowCount} records` })
-                    );
+                    edit.replaceNotebookCellMetadata(cell.notebook.uri, cell.index, {
+                        statusMessage: `${rowCount} records`
+                    });
                     workspace.applyEdit(edit);
                 }
             });
@@ -114,24 +111,16 @@ export class Kernel extends Disposable {
 
             const outputItems: NotebookCellOutputItem[] = [];
             if (chartType && chartType !== 'table') {
-                outputItems.push(new NotebookCellOutputItem('application/vnd.kusto.result.viz+json', results));
+                outputItems.push(NotebookCellOutputItem.json(results, 'application/vnd.kusto.result.viz+json'));
             } else {
-                outputItems.push(new NotebookCellOutputItem('application/vnd.kusto.result+json', results));
+                outputItems.push(NotebookCellOutputItem.json(results, 'application/vnd.kusto.result+json'));
             }
             task.appendOutput(new NotebookCellOutput(outputItems));
         } catch (ex) {
-            const error: Error | undefined = ex;
-            const data = {
-                ename: error?.name || 'Failed to execute query',
-                evalue: error?.message || '',
-                traceback: [error?.stack || format(ex)]
-            };
-
-            task.appendOutput(
-                new NotebookCellOutput([new NotebookCellOutputItem('application/x.notebook.error-traceback', data)])
-            );
+            const error: Error = ex instanceof Error && ex ? ex : new Error('Failed to execute query');
+            task.appendOutput(new NotebookCellOutput([NotebookCellOutputItem.error(error)]));
         } finally {
-            task.end({ endTime: Date.now(), success });
+            task.end(success, Date.now());
         }
     }
 }
@@ -143,7 +132,7 @@ export class InteractiveKernel extends Disposable {
             this.dispose();
         });
 
-        this.controller = notebook.createNotebookController(
+        this.controller = notebooks.createNotebookController(
             'kusto-interactive',
             'kusto-interactive',
             'Kusto Interactive',
@@ -163,7 +152,7 @@ export class InteractiveKernel extends Disposable {
     }
 
     public async executeInteractiveSelection(textEditor: TextEditor): Promise<void> {
-        const interactiveNotebook = notebook.notebookDocuments.find(isKustoInteractive);
+        const interactiveNotebook = workspace.notebookDocuments.find(isKustoInteractive);
         if (!interactiveNotebook) {
             return;
         }
@@ -179,20 +168,19 @@ export class InteractiveKernel extends Disposable {
         // ]);
         await workspace.applyEdit(edit);
         const cell = interactiveNotebook.cellAt[interactiveNotebook.cellCount - 1];
-        const task = this.controller.createNotebookCellExecutionTask(cell);
+        const task = this.controller.createNotebookCellExecution(cell);
         if (!task) {
             return;
         }
         const client = await Client.create(textEditor.document);
         if (!client) {
-            task.end();
+            task.end(false);
             return;
         }
-        const startTime = Date.now();
         edit = new WorkspaceEdit();
-        edit.replaceNotebookCellMetadata(cell.notebook.uri, cell.index, cell.metadata.with({ statusMessage: '' }));
+        edit.replaceNotebookCellMetadata(cell.notebook.uri, cell.index, { statusMessage: '' });
         const promise = workspace.applyEdit(edit);
-        task.start({ startTime });
+        task.start(Date.now());
         task.clearOutput();
         let success = false;
         try {
@@ -202,18 +190,16 @@ export class InteractiveKernel extends Disposable {
             ]);
             console.log(results);
             if (task.token.isCancellationRequested || !results) {
-                return task.end();
+                return task.end(success);
             }
             success = true;
             promise.then(() => {
                 const rowCount = results.primaryResults.length ? results.primaryResults[0]._rows.length : undefined;
                 if (rowCount) {
                     const edit = new WorkspaceEdit();
-                    edit.replaceNotebookCellMetadata(
-                        cell.notebook.uri,
-                        cell.index,
-                        cell.metadata.with({ statusMessage: `${rowCount} records` })
-                    );
+                    edit.replaceNotebookCellMetadata(cell.notebook.uri, cell.index, {
+                        statusMessage: `${rowCount} records`
+                    });
                     workspace.applyEdit(edit);
                 }
             });
@@ -230,36 +216,28 @@ export class InteractiveKernel extends Disposable {
 
             const outputItems: NotebookCellOutputItem[] = [];
             if (chartType && chartType !== 'table') {
-                outputItems.push(new NotebookCellOutputItem('application/vnd.kusto.result.viz+json', results));
+                outputItems.push(NotebookCellOutputItem.json(results, 'application/vnd.kusto.result.viz+json'));
             } else {
-                outputItems.push(new NotebookCellOutputItem('application/vnd.kusto.result+json', results));
+                outputItems.push(NotebookCellOutputItem.json(results, 'application/vnd.kusto.result+json'));
             }
             task.appendOutput(new NotebookCellOutput(outputItems));
         } catch (ex) {
-            const error: Error = ex;
-            const data = {
-                ename: ex.message || 'Failed to execute query',
-                evalue: ex.evalue || ex['@type'] || '',
-                traceback: [error.stack || format(ex)]
-            };
-
-            task.appendOutput(
-                new NotebookCellOutput([new NotebookCellOutputItem('application/x.notebook.error-traceback', data)])
-            );
+            const error: Error = ex instanceof Error && ex ? ex : new Error('Failed to execute query');
+            task.appendOutput(new NotebookCellOutput([NotebookCellOutputItem.error(error)]));
         } finally {
-            task.end({ endTime: Date.now(), success });
+            task.end(success, Date.now());
         }
     }
 }
 
 export function isJupyterNotebook(document: NotebookDocument) {
-    return document.viewType === 'jupyter-notebook';
+    return document.notebookType === 'jupyter-notebook';
 }
 export function isKustoNotebook(document: NotebookDocument) {
-    return document.viewType === 'kusto-notebook';
+    return document.notebookType === 'kusto-notebook';
 }
 export function isKustoInteractive(document: Uri | NotebookDocument) {
-    return 'viewType' in document
-        ? document.viewType === 'kusto-interactive'
+    return 'notebookType' in document
+        ? document.notebookType === 'kusto-interactive'
         : document.fsPath.toLowerCase().endsWith('.knb-interactive');
 }

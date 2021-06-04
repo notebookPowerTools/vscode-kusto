@@ -1,5 +1,5 @@
 import { EventEmitter, NotebookCell, NotebookCellKind, NotebookCellsChangeEvent, TextDocument, window } from 'vscode';
-import { commands, notebook, NotebookDocument, Uri, workspace, WorkspaceEdit } from 'vscode';
+import { commands, notebooks, NotebookDocument, Uri, workspace, WorkspaceEdit } from 'vscode';
 import { IConnectionInfo } from './types';
 import { debug, logError, registerDisposable } from '../../utils';
 import { isJupyterNotebook, isKustoNotebook } from '../../kernel/provider';
@@ -15,7 +15,7 @@ const onDidChangeConnection = new EventEmitter<NotebookDocument | TextDocument>(
 export function registerNotebookConnection() {
     registerDisposable(onDidChangeConnection);
     registerDisposable(commands.registerCommand('kusto.changeDocumentConnection', changDocumentConnection));
-    registerDisposable(notebook.onDidChangeNotebookCells(onDidChangeJupyterNotebookCells));
+    registerDisposable(notebooks.onDidChangeNotebookCells(onDidChangeJupyterNotebookCells));
     registerDisposable(workspace.onDidChangeTextDocument((e) => onDidChangeJupyterNotebookCell(e.document)));
 }
 export function addDocumentConnectionHandler(cb: (document: NotebookDocument | TextDocument) => void) {
@@ -24,7 +24,7 @@ export function addDocumentConnectionHandler(cb: (document: NotebookDocument | T
 export async function ensureDocumentHasConnectionInfo(
     document: NotebookDocument | TextDocument
 ): Promise<IConnectionInfo | undefined> {
-    if ('viewType' in document) {
+    if ('notebookType' in document) {
         return ensureNotebookHasConnectionInfoInternal(document, false);
     } else {
         return ensureDocumentHasConnectionInfoInternal(document, false);
@@ -91,7 +91,7 @@ async function changDocumentConnection(uri?: Uri) {
         return;
     }
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const document = notebook.notebookDocuments.find((item) => item.uri.toString() === uri!.toString());
+    const document = workspace.notebookDocuments.find((item) => item.uri.toString() === uri!.toString());
     if (document) {
         await ensureNotebookHasConnectionInfoInternal(document, true);
     } else {

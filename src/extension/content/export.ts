@@ -1,5 +1,5 @@
 import { EOL } from 'os';
-import { commands, notebook, NotebookCell, NotebookCellKind, Uri, window, workspace } from 'vscode';
+import { commands, NotebookCell, NotebookCellKind, Uri, window, workspace } from 'vscode';
 import { isKustoNotebook } from '../kernel/provider';
 import { registerDisposable } from '../utils';
 import { getConnectionInfoFromDocumentMetadata } from '../kusto/connections/notebookConnection';
@@ -15,7 +15,7 @@ async function exportNotebook(uri?: Uri) {
         return;
     }
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const document = notebook.notebookDocuments.find((item) => item.uri.toString() === uri!.toString());
+    const document = workspace.notebookDocuments.find((item) => item.uri.toString() === uri!.toString());
     if (!document) {
         return;
     }
@@ -93,7 +93,7 @@ async function exportNotebook(uri?: Uri) {
 }
 
 function convertCell(cell: NotebookCell): string {
-    return cell.kind === NotebookCellKind.Markdown ? convertMarkdownCell(cell) : convertCodeCell(cell);
+    return cell.kind === NotebookCellKind.Markup ? convertMarkdownCell(cell) : convertCodeCell(cell);
 }
 function convertMarkdownCell(cell: NotebookCell): string {
     return cell.document
@@ -107,7 +107,7 @@ function convertCodeCell(cell: NotebookCell): string {
 }
 
 function convertCellToJupyter(cell: NotebookCell): IMarkdownCell | ICodeCell {
-    return cell.kind === NotebookCellKind.Markdown
+    return cell.kind === NotebookCellKind.Markup
         ? convertMarkdownCellToJupyter(cell)
         : convertCodeCellToJupyter(cell);
 }

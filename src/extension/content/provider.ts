@@ -4,17 +4,14 @@ import { KustoResponseDataSet } from 'azure-kusto-data/source/response';
 import {
     CancellationToken,
     commands,
-    notebook,
     NotebookCellData,
     NotebookCellKind,
-    NotebookCellMetadata,
     NotebookCellOutput,
     NotebookContentProvider,
     NotebookData,
     NotebookDocument,
     NotebookDocumentBackup,
     NotebookDocumentBackupContext,
-    NotebookDocumentMetadata,
     NotebookDocumentOpenContext,
     Uri,
     workspace
@@ -63,7 +60,7 @@ export class ContentProvider implements NotebookContentProvider {
 
     public static register() {
         const persistOutputs = vscode.workspace.getConfiguration().get<boolean>('kusto.persistOutputs');
-        let disposable = notebook.registerNotebookContentProvider(
+        let disposable = workspace.registerNotebookContentProvider(
             'kusto-notebook',
             new ContentProvider(persistOutputs ?? false),
             {
@@ -72,7 +69,7 @@ export class ContentProvider implements NotebookContentProvider {
             }
         );
         registerDisposable(disposable);
-        disposable = notebook.registerNotebookContentProvider('kusto-interactive', new ContentProvider(false), {
+        disposable = workspace.registerNotebookContentProvider('kusto-interactive', new ContentProvider(false), {
             transientOutputs: true,
             transientDocumentMetadata: {
                 custom: true,
@@ -103,19 +100,16 @@ export class ContentProvider implements NotebookContentProvider {
             const cells = notebook.cells.map((item) => {
                 const outputs: NotebookCellOutput[] = item.outputs.map(getCellOutput);
                 const locked = false; //item.metadata?.locked === true;
-                const metadata = new NotebookCellMetadata().with({
+                const metadata = {
                     editable: !locked,
                     inputCollapsed: item.metadata?.inputCollapsed,
                     outputCollapsed: item.metadata?.outputCollapsed
-                });
-                const kind = item.kind === 'code' ? NotebookCellKind.Code : NotebookCellKind.Markdown;
-                return new NotebookCellData(
-                    kind,
-                    item.source,
-                    item.kind === 'code' ? 'kusto' : 'markdown',
-                    outputs,
-                    metadata
-                );
+                };
+                const kind = item.kind === 'code' ? NotebookCellKind.Code : NotebookCellKind.Markup;
+                const cell = new NotebookCellData(kind, item.source, item.kind === 'code' ? 'kusto' : 'markdown');
+                cell.outputs = outputs;
+                cell.metadata = metadata;
+                return cell;
             });
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const custom: Record<string, any> = {};
@@ -144,24 +138,26 @@ export class ContentProvider implements NotebookContentProvider {
                 }
                 updateCustomMetadataWithConnectionInfo(custom, connection);
             }
-            let metadata = new NotebookDocumentMetadata().with({
+            let metadata = {
                 cellEditable: true, // !notebook.metadata?.locked,
-                cellHasExecutionOrder: false,
                 editable: true, //!notebook.metadata?.locked,
                 trusted: true,
                 custom
-            });
+            };
             if (isKustoInteractive(uri)) {
-                metadata = new NotebookDocumentMetadata().with({
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                //@ts-ignore
+                metadata = {
                     cellEditable: false,
-                    cellHasExecutionOrder: false,
                     editable: false,
                     trusted: true
-                });
+                };
             }
             console.log(metadata);
             console.log(cells);
-            return new NotebookData(cells, metadata);
+            const notebookData = new NotebookData(cells);
+            notebookData.metadata = metadata;
+            return notebookData;
         } catch (ex) {
             if (!isUntitledFile(uri)) {
                 debug('Failed to parse notebook contents', ex);
@@ -200,10 +196,10 @@ export class ContentProvider implements NotebookContentProvider {
                 if (this._persistOutputs) {
                     let output: KustoResponseDataSet | undefined;
                     cell.outputs.forEach((item) => {
-                        const kustoOutputItem = item.outputs.find((outputItem) =>
+                        const kustoOutputItem = item.items.find((outputItem) =>
                             outputItem.mime.startsWith('application/vnd.kusto.result')
                         );
-                        output = output || (kustoOutputItem?.value as KustoResponseDataSet);
+                        output = output || ((kustoOutputItem?.data as unknown) as KustoResponseDataSet);
                     });
 
                     outputs = output ? [output] : [];
@@ -284,7 +280,7 @@ export function getConnectionFromMetadata(custom: Record<string, unknown>, conne
 }
 function createUntitledFileName() {
     const untitledNumbers = new Set(
-        notebook.notebookDocuments
+        workspace.notebookDocuments
             .filter((item) => (isKustoNotebook(item) && item.isUntitled) || isUntitledFile(item.uri))
             .map((item) => path.basename(item.uri.fsPath.toLowerCase(), '.knb'))
             .filter((item) => item.includes('-'))
