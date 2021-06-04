@@ -39,9 +39,9 @@ export function getCellOutput(result: KustoResponseDataSet): NotebookCellOutput 
     const chartType = getChartType(result);
     const outputItems: NotebookCellOutputItem[] = [];
     if (chartType && chartType !== 'table') {
-        outputItems.push(new NotebookCellOutputItem('application/vnd.kusto.result.viz+json', result));
+        outputItems.push(NotebookCellOutputItem.json(result, 'application/vnd.kusto.result.viz+json'));
     } else {
-        outputItems.push(new NotebookCellOutputItem('application/vnd.kusto.result+json', result));
+        outputItems.push(NotebookCellOutputItem.json(result, 'application/vnd.kusto.result+json'));
     }
     return new NotebookCellOutput(outputItems);
 }

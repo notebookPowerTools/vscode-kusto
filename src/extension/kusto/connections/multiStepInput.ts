@@ -11,6 +11,7 @@ export class InputFlowAction {
     public static back = new InputFlowAction();
     public static cancel = new InputFlowAction();
     public static resume = new InputFlowAction();
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     private constructor() {}
 }
 

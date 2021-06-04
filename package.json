@@ -254,7 +254,7 @@
         },
         "notebooks": [
             {
-                "viewType": "kusto-notebook",
+                "type": "kusto-notebook",
                 "displayName": "Kusto Notebook",
                 "selector": [
                     {
@@ -263,7 +263,7 @@
                 ]
             },
             {
-                "viewType": "kusto-interactive",
+                "type": "kusto-interactive",
                 "displayName": "Kusto Interactive",
                 "selector": [
                     {
@@ -272,7 +272,7 @@
                 ]
             }
         ],
-        "notebookOutputRenderer": [
+        "notebookRenderer": [
             {
                 "id": "kusto-notebook-renderer-viz",
                 "entrypoint": "./out/renderer/visualization.js",
@@ -345,7 +345,7 @@
         "@types/react-dom": "16.9.8",
         "@types/uuid": "^8.0.0",
         "@types/vscode": "^1.54.0",
-        "@types/vscode-notebook-renderer": "^1.57.0",
+        "@types/vscode-notebook-renderer": "^1.57.8",
         "@typescript-eslint/eslint-plugin": "^3.1.0",
         "@typescript-eslint/parser": "^3.1.0",
         "cache-loader": "^4.1.0",

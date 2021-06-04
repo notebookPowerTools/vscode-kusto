@@ -1,6 +1,6 @@
 import KustoClient from 'azure-kusto-data/source/client';
 import { KustoResponseDataSet } from 'azure-kusto-data/source/response';
-import { notebook, NotebookDocument, TextDocument } from 'vscode';
+import { workspace, NotebookDocument, TextDocument } from 'vscode';
 import { Connection, fromConnectionInfo } from './connections';
 import { addDocumentConnectionHandler, ensureDocumentHasConnectionInfo } from './connections/notebookConnection';
 import { IConnectionInfo } from './connections/types';
@@ -71,7 +71,7 @@ export class Client implements IDisposable {
     }
     private addHandlers() {
         addDocumentConnectionHandler((e) => clientMap.delete(e));
-        notebook.onDidCloseNotebookDocument(
+        workspace.onDidCloseNotebookDocument(
             (e) => {
                 if (e === this.document) {
                     this.dispose();

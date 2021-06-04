@@ -1,6 +1,6 @@
 import { KustoResponseDataSet } from 'azure-kusto-data/source/response';
 import {
-    notebook,
+    notebooks,
     CancellationToken,
     ExtensionContext,
     NotebookCell,
@@ -9,23 +9,23 @@ import {
 } from 'vscode';
 
 export class StatusBarProvider implements NotebookCellStatusBarItemProvider {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     protected contructor() {}
     static register(context: ExtensionContext) {
+        const statusBarProvider = new StatusBarProvider();
         context.subscriptions.push(
-            notebook.registerNotebookCellStatusBarItemProvider(
-                [{ viewType: 'kusto-notebook' }, { viewType: 'kusto-interactive' }],
-                new StatusBarProvider()
-            )
+            notebooks.registerNotebookCellStatusBarItemProvider('kusto-notebook', statusBarProvider),
+            notebooks.registerNotebookCellStatusBarItemProvider('kusto-interactive', statusBarProvider)
         );
     }
 
-    provideCellStatusBarItems(cell: NotebookCell, token: CancellationToken) {
+    provideCellStatusBarItems(cell: NotebookCell, _token: CancellationToken) {
         if (cell.outputs.length) {
             const firstOutput = cell.outputs[0];
-            const outputItem = firstOutput.outputs[0];
+            const outputItem = firstOutput.items[0];
 
             if (outputItem) {
-                const results = outputItem.value as KustoResponseDataSet | undefined;
+                const results = (outputItem.data as unknown) as KustoResponseDataSet | undefined;
                 const rowCount = results?.primaryResults.length ? results?.primaryResults[0]._rows.length : undefined;
 
                 if (rowCount) {

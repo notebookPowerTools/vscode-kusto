@@ -1,4 +1,4 @@
-import { notebook, NotebookDocument, TextEditor, Uri, ViewColumn, window } from 'vscode';
+import { workspace, NotebookDocument, TextEditor, Uri, ViewColumn, window } from 'vscode';
 import { commands } from 'vscode';
 import { KernelProvider } from '../kernel/provider';
 import { isKustoInteractive } from '../kernel/provider';
@@ -7,7 +7,7 @@ import { isKustoFile, registerDisposable } from '../utils';
 export function registerInteractiveExperience() {
     registerDisposable(commands.registerTextEditorCommand('kusto.executeSelectedQuery', executeSelectedQuery));
     registerDisposable(
-        notebook.onDidCloseNotebookDocument((e) => {
+        workspace.onDidCloseNotebookDocument((e) => {
             if (e === interactiveNotebook) {
                 interactiveNotebook = undefined;
             }
@@ -28,7 +28,7 @@ export async function createInteractiveWindow() {
     if (interactiveNotebook) {
         return interactiveNotebook;
     }
-    interactiveNotebook = interactiveNotebook || notebook.notebookDocuments.find(isKustoInteractive);
+    interactiveNotebook = interactiveNotebook || workspace.notebookDocuments.find(isKustoInteractive);
     if (!interactiveNotebook) {
         const name = `Interactive Output.knb-interactive`;
         const uri = Uri.file(name).with({ scheme: 'interactive', path: name });
