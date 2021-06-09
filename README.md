@@ -39,6 +39,7 @@ A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marke
 [Joyce Er](https://github.com/joyceerhl)
 [SteVen Batten](https://github.com/sbatten)
 [Peng Lyu](https://github.com/rebornix)
+[Tanha Kabir](https://github.com/tanhakabir)
 
 # License
 
