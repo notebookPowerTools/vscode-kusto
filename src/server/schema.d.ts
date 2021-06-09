@@ -149,7 +149,7 @@ export namespace showSchema {
 
     export interface Table {
         Name: string;
-        EntityType: TableEntityType,
+        EntityType: TableEntityType;
         OrderedColumns: Column[];
         DocString?: string;
     }

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-unused-vars */
 // This must be on top, do not change. Required by webpack.
 // eslint-disable-next-line no-unused-vars
 declare let __webpack_public_path__: string;
@@ -12,32 +14,49 @@ __webpack_public_path__ = getPublicPath();
 
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import type { NotebookOutputEventParams } from 'vscode-notebook-renderer';
+import type { ActivationFunction, OutputItem } from 'vscode-notebook-renderer';
 import type { KustoResponseDataSet } from 'azure-kusto-data/source/response';
 import type { KustoResultTable } from 'azure-kusto-data/source/models';
 import { hasDataTable } from './utils';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import ReactJson from 'react-json-view'; // eslint-disable-next-line @typescript-eslint/no-unused-vars
+import ReactJson from 'react-json-view';
 import { AgGridReact } from 'ag-grid-react';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import { CellDoubleClickedEvent, ColDef, RowSelectedEvent } from 'ag-grid-community';
+// import { request } from 'node:http';
 
-const notebookApi = acquireNotebookRendererApi();
-
-notebookApi.onDidCreateOutput(renderOutput);
+export const activate: ActivationFunction = () => {
+    return {
+        renderOutputItem(outputItem, element) {
+            renderOutput(outputItem, element);
+        }
+    };
+};
 
 /**
  * Called from renderer to render output.
  * This will be exposed as a public method on window for renderer to render output.
  */
-function renderOutput(request: NotebookOutputEventParams) {
+function renderOutput(value: OutputItem, element: HTMLElement) {
     try {
+        const style = document.createElement('style');
+        style.type = 'text/css';
+        style.media = 'screen';
+        style.textContent = `
+            .ag-cell,
+            .ag-header-cell,
+            .ag-header-container,
+            .ag-header-viewport {
+                overflow-x: hidden !important;
+            }
+        `;
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        renderDataTable(request.value as any, request.element);
+        renderDataTable(value.json(), element);
+        element.appendChild(style);
     } catch (ex) {
-        console.error(`Failed to render output ${JSON.stringify(request.value)}`, ex);
+        console.error(`Failed to render output ${value.text()}`, ex);
     }
 }
 const columnDataType = new Map<string, string>();

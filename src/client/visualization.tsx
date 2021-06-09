@@ -10,27 +10,44 @@ const getPublicPath = () => {
 __webpack_public_path__ = getPublicPath();
 // This must be on top, do not change. Required by webpack.
 
-import type { NotebookOutputEventParams } from 'vscode-notebook-renderer';
+import type { ActivationFunction, OutputItem } from 'vscode-notebook-renderer';
 import type { KustoResponseDataSet } from 'azure-kusto-data/source/response';
 import type * as PlotlyType from 'plotly.js';
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-var-requires
 const Plotly: typeof PlotlyType = require('plotly.js/dist/plotly');
 // const Plotly: typeof PlotlyType = require('plotly.js');
 
-const notebookApi = acquireNotebookRendererApi();
-
-notebookApi.onDidCreateOutput(renderOutput);
+export const activate: ActivationFunction = () => {
+    return {
+        renderOutputItem(outputItem, element) {
+            renderOutput(outputItem, element);
+        }
+    };
+};
 
 /**
  * Called from renderer to render output.
  * This will be exposed as a public method on window for renderer to render output.
  */
-function renderOutput(request: NotebookOutputEventParams) {
+function renderOutput(value: OutputItem, element: HTMLElement) {
     try {
-        request.element.style.backgroundColor = 'white';
-        renderChart(request.value as any, request.element);
+        const style = document.createElement('style');
+        style.type = 'text/css';
+        style.media = 'screen';
+        style.textContent = `
+            .ag-cell,
+            .ag-header-cell,
+            .ag-header-container,
+            .ag-header-viewport {
+                overflow-x: hidden !important;
+            }
+        `;
+
+        element.style.backgroundColor = 'white';
+        renderChart(value.json(), element);
+        element.appendChild(style);
     } catch (ex) {
-        console.error(`Failed to render output ${JSON.stringify(request.value)}`, ex);
+        console.error(`Failed to render output ${value.text()}`, ex);
     }
 }
 

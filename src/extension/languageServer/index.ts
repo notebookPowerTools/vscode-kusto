@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash';
 import * as path from 'path';
-import { ExtensionContext, notebook, NotebookDocument, TextDocument, window, workspace } from 'vscode';
+import { ExtensionContext, NotebookDocument, TextDocument, window, workspace } from 'vscode';
 import { LanguageClientOptions } from 'vscode-languageclient';
 import { LanguageClient, ServerOptions, State, TransportKind } from 'vscode-languageclient/node';
 import { isJupyterNotebook, isKustoNotebook } from '../kernel/provider';
@@ -19,11 +19,11 @@ let clientIsReady: boolean | undefined;
 export async function initialize(context: ExtensionContext) {
     startLanguageServer(context);
     // When a notebook is opened, fetch the schema & send it.
-    registerDisposable(notebook.onDidOpenNotebookDocument(sendSchemaForDocument));
+    registerDisposable(workspace.onDidOpenNotebookDocument(sendSchemaForDocument));
     addDocumentConnectionHandler(sendSchemaForDocument);
     registerDisposable(workspace.onDidOpenTextDocument(sendSchemaForDocument));
     // Send schemas for currently opened documents as well.
-    notebook.notebookDocuments.forEach(sendSchemaForDocument);
+    workspace.notebookDocuments.forEach(sendSchemaForDocument);
 }
 
 function startLanguageServer(context: ExtensionContext) {
