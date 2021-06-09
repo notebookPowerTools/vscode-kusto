@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.15 (9 Jun 2021)
+
+### Enhancements
+
+1. Support VS Code Stable
+
 ## 0.0.9 (10 May 2021)
 
 ### Enhancements

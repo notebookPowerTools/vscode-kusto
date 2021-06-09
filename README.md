@@ -14,9 +14,6 @@ A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marke
 * Kusto panel with access to Clusters, Databases, Tables, etc
 
 # Getting Started
-* Please install VS Code Insiders (stable is not yet supported)
-* Install this extension
-* Launch VS Code with the following command line `code-insiders --enable-proposed-api=donjayamanne.kusto`
 * Create a file with extension `*.knb` (or use the command `Create Kusto Notebook`)
 * Use the command `Configure Kusto Connection` to configure the Kusto connection.
 
@@ -29,11 +26,6 @@ A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marke
     * Authentication against Azure is handled by VS Code.
 * With Jupyter Notebooks, you'll need to install Python and the [kqlmagic](https://pypi.org/project/Kqlmagic/) package.
     * You can use Python to further analyze the data.
-
-# Preview
-This extension is still in preview and a very early build with a long way to go before it is ready for day to day use.
-* Limited to VS Code Insiders
-* Launch VS Code with the following command line `code-insiders --enable-proposed-api=donjayamanne.kusto`
 
 # Authentication
 * VS Code handles Azure Authentication (if required)
