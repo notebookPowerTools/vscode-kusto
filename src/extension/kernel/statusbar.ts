@@ -22,19 +22,25 @@ export class StatusBarProvider implements NotebookCellStatusBarItemProvider {
     provideCellStatusBarItems(cell: NotebookCell, _token: CancellationToken) {
         if (cell.outputs.length) {
             const firstOutput = cell.outputs[0];
-            const outputItem = firstOutput.items[0];
 
-            if (outputItem) {
-                const results: KustoResponseDataSet = JSON.parse(Buffer.from(outputItem.data).toString('utf8'));
-                const rowCount = results?.primaryResults.length ? results?.primaryResults[0]._rows.length : undefined;
+            if (firstOutput.items.length) {
+                const outputItem = firstOutput.items[0];
+                try {
+                    const results: KustoResponseDataSet = JSON.parse(Buffer.from(outputItem.data).toString('utf8'));
+                    const rowCount = results?.primaryResults.length
+                        ? results?.primaryResults[0]._rows.length
+                        : undefined;
 
-                if (rowCount) {
-                    return [
-                        {
-                            text: `${rowCount} records`,
-                            alignment: NotebookCellStatusBarAlignment.Left
-                        }
-                    ];
+                    if (rowCount) {
+                        return [
+                            {
+                                text: `${rowCount} records`,
+                                alignment: NotebookCellStatusBarAlignment.Left
+                            }
+                        ];
+                    }
+                } catch (ex) {
+                    console.error('Failures in statusbar', ex);
                 }
             }
         }

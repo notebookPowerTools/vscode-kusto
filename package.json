@@ -2,10 +2,11 @@
     "name": "kusto",
     "displayName": "Kusto Notebooks",
     "description": "Run Kusto Queries in Notebooks",
-    "version": "0.0.15",
+    "version": "0.0.16",
     "engines": {
-        "vscode": "1.57.0"
+        "vscode": "1.57.0-insider"
     },
+    "enableProposedApi": true,
     "publisher": "donjayamanne",
     "author": {
         "name": "Don Jayamanne"
@@ -317,7 +318,6 @@
         "postinstall": "npm run download-api"
     },
     "dependencies": {
-        "@kusto/monaco-kusto": "^3.2.5",
         "ag-grid-community": "^25.1.0",
         "ag-grid-react": "^25.1.0",
         "axios": "^0.21.1",
