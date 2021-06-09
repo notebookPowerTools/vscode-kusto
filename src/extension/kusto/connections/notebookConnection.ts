@@ -7,7 +7,7 @@ import { isEqual } from 'lodash';
 import { captureConnectionFromUser } from './management';
 import { AzureAuthenticatedConnection } from './azAuth';
 import { getFromCache, updateCache } from '../../cache';
-import { getConnectionFromNotebookMetadata, updateCustomMetadataWithConnectionInfo } from '../../content/provider';
+import { getConnectionFromNotebookMetadata, updateMetadataWithConnectionInfo } from '../../content/provider';
 import { GlobalMementoKeys } from '../../constants';
 
 const onDidChangeConnection = new EventEmitter<NotebookDocument | TextDocument>();
@@ -145,11 +145,11 @@ export function getConnectionInfoFromDocumentMetadata(
     if ('notebook' in document && document.notebook) {
         document = document.notebook;
     }
-    if ('viewType' in document) {
+    if ('notebookType' in document) {
         if (isJupyterNotebook(document)) {
             connection = getConnectionInfoFromJupyterNotebook(document);
         } else {
-            connection = getConnectionFromNotebookMetadata(document);
+            connection  = getConnectionFromNotebookMetadata(document);
         }
     }
     if (connection && !getFromCache(GlobalMementoKeys.lastUsedConnection)) {
@@ -217,10 +217,9 @@ async function updateNotebookConnection(document: NotebookDocument, info: IConne
         return;
     }
     const edit = new WorkspaceEdit();
-    const custom = JSON.parse(JSON.stringify(document.metadata.custom)) || {};
-    updateCustomMetadataWithConnectionInfo(custom, info);
-    const newMetadata = document.metadata.with({ custom });
-    edit.replaceNotebookMetadata(document.uri, newMetadata);
+    const metadata = JSON.parse(JSON.stringify(document.metadata)) || {};
+    updateMetadataWithConnectionInfo(metadata, info);
+    edit.replaceNotebookMetadata(document.uri, metadata);
     await workspace.applyEdit(edit);
     onDidChangeConnection.fire(document);
 }

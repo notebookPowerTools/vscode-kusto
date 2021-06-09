@@ -25,7 +25,7 @@ export class StatusBarProvider implements NotebookCellStatusBarItemProvider {
             const outputItem = firstOutput.items[0];
 
             if (outputItem) {
-                const results = (outputItem.data as unknown) as KustoResponseDataSet | undefined;
+                const results: KustoResponseDataSet = JSON.parse(Buffer.from(outputItem.data).toString('utf8'));
                 const rowCount = results?.primaryResults.length ? results?.primaryResults[0]._rows.length : undefined;
 
                 if (rowCount) {

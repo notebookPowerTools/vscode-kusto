@@ -16,22 +16,26 @@ module.exports = {
     output: {
         path: path.join(constants.ExtensionRootDir, 'out', 'renderer'),
         filename: '[name].js',
-        chunkFilename: `[name].bundle.js`
+        chunkFilename: `[name].bundle.js`,
+        libraryTarget: 'module'
+    },
+    experiments: {
+        outputModule: true
     },
     mode: isProdBuild ? 'production' : 'development',
     devtool: isProdBuild ? 'source-map' : 'inline-source-map',
-    node: {
-        fs: 'empty'
-    },
     plugins: [
-        new FixDefaultImportPlugin(),
+        // new FixDefaultImportPlugin(),
         new ForkTsCheckerWebpackPlugin({
-            checkSyntacticErrors: true,
-            tsconfig: configFileName,
-            reportFiles: ['src/client/**/*.{ts,tsx}'],
-            memoryLimit: 9096
-        }),
-        ...common.getDefaultPlugins('extension')
+            typescript: {
+                checkSyntacticErrors: true,
+                configFile: configFileName,
+                memoryLimit: 9096
+            }
+
+            // reportFiles: ['src/client/**/*.{ts,tsx}']
+        })
+        // ...common.getDefaultPlugins('extension')
     ],
     stats: {
         performance: false
