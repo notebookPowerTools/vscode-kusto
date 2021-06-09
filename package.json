@@ -7,7 +7,6 @@
         "vscode": "1.57.0"
     },
     "publisher": "donjayamanne",
-    "enableProposedApi": true,
     "author": {
         "name": "Don Jayamanne"
     },
