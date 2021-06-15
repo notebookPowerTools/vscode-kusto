@@ -4,7 +4,7 @@
     "description": "Run Kusto Queries in Notebooks",
     "version": "0.0.17",
     "engines": {
-        "vscode": "1.57.0-insider"
+        "vscode": "^1.57.0-insider"
     },
     "enableProposedApi": true,
     "publisher": "donjayamanne",
