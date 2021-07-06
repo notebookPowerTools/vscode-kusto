@@ -1,11 +1,14 @@
 import { languages, NotebookCellKind, NotebookDocument, notebooks, TextDocument, workspace } from 'vscode';
+import { useProposedApi } from '../constants';
 import { isJupyterNotebook } from '../kernel/provider';
 import { registerDisposable } from '../utils';
 
 export function monitorJupyterCells() {
     registerDisposable(workspace.onDidOpenNotebookDocument(updateKustoCellsOfDocument));
     registerDisposable(workspace.onDidChangeTextDocument((e) => updateKustoCells(e.document)));
-    registerDisposable(notebooks.onDidChangeNotebookCells((e) => updateKustoCellsOfDocument(e.document)));
+    if (useProposedApi()) {
+        registerDisposable(notebooks.onDidChangeNotebookCells((e) => updateKustoCellsOfDocument(e.document)));
+    }
     workspace.notebookDocuments.forEach(updateKustoCellsOfDocument);
 }
 

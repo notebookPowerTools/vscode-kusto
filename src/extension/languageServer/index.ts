@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash';
 import * as path from 'path';
-import { ExtensionContext, NotebookDocument, TextDocument, window, workspace } from 'vscode';
+import { env, ExtensionContext, NotebookDocument, TextDocument, UIKind, window, workspace } from 'vscode';
 import { LanguageClientOptions } from 'vscode-languageclient';
 import { LanguageClient, ServerOptions, State, TransportKind } from 'vscode-languageclient/node';
 import { isJupyterNotebook, isKustoNotebook } from '../kernel/provider';
@@ -12,12 +12,15 @@ import {
 } from '../kusto/connections/notebookConnection';
 import { IConnectionInfo } from '../kusto/connections/types';
 import { EngineSchema } from '../kusto/schema';
-import { debug, registerDisposable } from '../utils';
+import { getNotebookDocument, isNotebookCell, registerDisposable } from '../utils';
+import { setDocumentEngineSchema } from './browser';
 
 let client: LanguageClient;
 let clientIsReady: boolean | undefined;
 export async function initialize(context: ExtensionContext) {
-    startLanguageServer(context);
+    if (env.uiKind === UIKind.Desktop) {
+        startLanguageServer(context);
+    }
     // When a notebook is opened, fetch the schema & send it.
     registerDisposable(workspace.onDidOpenNotebookDocument(sendSchemaForDocument));
     addDocumentConnectionHandler(sendSchemaForDocument);
@@ -58,7 +61,7 @@ function startLanguageServer(context: ExtensionContext) {
     const onDidChangeStateHandler = client.onDidChangeState((e) => {
         if (e.newState === State.Running) {
             clientIsReady = true;
-            sendSchemaForDocuments();
+            sendSchemaForDocumentsToNodeLanguageServer();
             onDidChangeStateHandler.dispose();
         }
     });
@@ -67,21 +70,23 @@ function startLanguageServer(context: ExtensionContext) {
     client.start();
 }
 
-const lastSentConnectionForDocument = new WeakMap<NotebookDocument | TextDocument, EngineSchema>();
-const pendingSchemas = new Map<string, EngineSchema>();
+const lastSentConnectionForDocument = new WeakMap<NotebookDocument | TextDocument, Partial<IConnectionInfo>>();
+const pendingSchemas = new Map<NotebookDocument | TextDocument, EngineSchema>();
 async function sendSchemaForDocument(document: NotebookDocument | TextDocument) {
-    if ('viewType' in document && !isKustoNotebook(document) && !isJupyterNotebook(document)) {
+    const notebook = getNotebookDocument(document);
+    if (notebook && !isKustoNotebook(notebook) && !isJupyterNotebook(notebook)) {
         return;
     }
-    // If this is a cell in a Jupyter notebook, get the notebook object,
-    if ('notebook' in document && document.notebook && isJupyterNotebook(document.notebook)) {
-        document = document.notebook;
+    // If this is a cell in a notebook, get the notebook object,
+    if (isNotebookCell(document) && notebook && (isJupyterNotebook(notebook) || isKustoNotebook(notebook))) {
+        document = notebook;
     }
     const info = getConnectionInfoFromDocumentMetadata(document);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!info || !shouldSendSchemaToLanguageServer(document, info as any)) {
         return;
     }
+    lastSentConnectionForDocument.set(document, info);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const engineSchema = await fromConnectionInfo(info as any).getSchema();
     const clone: EngineSchema = JSON.parse(JSON.stringify(engineSchema));
@@ -93,8 +98,8 @@ async function sendSchemaForDocument(document: NotebookDocument | TextDocument) 
     if (!clone.database && engineSchema.cluster.databases.length) {
         clone.database = engineSchema.cluster.databases[0];
     }
-    pendingSchemas.set(document.uri.toString(), clone);
-    lastSentConnectionForDocument.set(document, clone);
+    pendingSchemas.set(document, clone);
+    lastSentConnectionForDocument.set(document, info);
     sendSchemaForDocuments();
 }
 function shouldSendSchemaToLanguageServer(document: NotebookDocument | TextDocument, info: IConnectionInfo) {
@@ -105,13 +110,32 @@ function shouldSendSchemaToLanguageServer(document: NotebookDocument | TextDocum
     return lastSent && isEqual(lastSent, info) ? false : true;
 }
 function sendSchemaForDocuments() {
+    if (env.uiKind === UIKind.Desktop) {
+        sendSchemaForDocumentsToNodeLanguageServer();
+    } else {
+        sendSchemaForDocumentsToWebLanguageServer();
+    }
+}
+function sendSchemaForDocumentsToWebLanguageServer() {
+    pendingSchemas.forEach((engineSchema, documentOrNotebook) => {
+        console.debug(
+            `Sending schema for ${documentOrNotebook} ${engineSchema.cluster.connectionString}: ${engineSchema.database?.name}`
+        );
+        setDocumentEngineSchema(documentOrNotebook, engineSchema);
+    });
+    pendingSchemas.clear();
+}
+
+function sendSchemaForDocumentsToNodeLanguageServer() {
     if (!client || !clientIsReady) {
         return;
     }
-    pendingSchemas.forEach((engineSchema, uri) => {
-        debug(`Sending schema for ${uri} ${engineSchema.cluster.connectionString}: ${engineSchema.database?.name}`);
+    pendingSchemas.forEach((engineSchema, documentOrNotebook) => {
+        console.debug(
+            `Sending schema for ${documentOrNotebook} ${engineSchema.cluster.connectionString}: ${engineSchema.database?.name}`
+        );
         client.sendNotification('setSchema', {
-            uri,
+            uri: documentOrNotebook.uri.toString(),
             engineSchema
         });
     });

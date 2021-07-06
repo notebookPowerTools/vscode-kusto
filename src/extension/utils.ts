@@ -1,5 +1,5 @@
 import { IDisposable } from './types';
-import { CancellationToken, ExtensionContext, TextDocument, Uri } from 'vscode';
+import { CancellationToken, ExtensionContext, NotebookDocument, TextDocument, Uri, workspace } from 'vscode';
 import { createHash } from 'crypto';
 
 const disposables: IDisposable[] = [];
@@ -24,14 +24,6 @@ export function disposeAllDisposables(disposables: IDisposable[]) {
 
 export function registerDisposable(disposable: IDisposable) {
     disposables.push(disposable);
-}
-
-export function debug(message: string, ...args: unknown[]) {
-    console.debug(message, ...args);
-}
-
-export function logError(message: string, ...args: unknown[]) {
-    console.error(message, ...args);
 }
 
 //======================
@@ -125,13 +117,23 @@ export function createPromiseFromToken<T>(
         registerDisposable(disposable);
     });
 }
-
+export const NotebookCellScheme = 'vscode-notebook-cell';
 export function isUntitledFile(file?: Uri) {
     return file?.scheme === 'untitled';
 }
 export function isKustoFile(document: TextDocument) {
     return document.languageId === 'kusto';
 }
+export function isKustoCell(document: TextDocument) {
+    return document.languageId === 'kusto' && document.uri.scheme === NotebookCellScheme;
+}
+export function isNotebookCell(document: NotebookDocument | TextDocument) {
+    return document.uri.scheme === NotebookCellScheme;
+}
 export function getHash(value: string) {
     return createHash('sha1').update(value).digest('hex');
+}
+
+export function getNotebookDocument(document: TextDocument | NotebookDocument): NotebookDocument | undefined {
+    return workspace.notebookDocuments.find((item) => item.uri.path === document.uri.path);
 }

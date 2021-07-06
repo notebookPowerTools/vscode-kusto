@@ -1,13 +1,13 @@
 // This must be on top, do not change. Required by webpack.
 // eslint-disable-next-line no-unused-vars
-declare let __webpack_public_path__: string;
-declare const scriptUrl: string;
-const getPublicPath = () => {
-    return new URL(scriptUrl.replace(/[^/]+$/, '')).toString();
-};
+// declare let __webpack_public_path__: string;
+// declare const scriptUrl: string;
+// const getPublicPath = () => {
+//     return new URL(scriptUrl.replace(/[^/]+$/, '')).toString();
+// };
 
-// eslint-disable-next-line prefer-const
-__webpack_public_path__ = getPublicPath();
+// // eslint-disable-next-line prefer-const
+// __webpack_public_path__ = getPublicPath();
 // This must be on top, do not change. Required by webpack.
 
 import type { ActivationFunction, OutputItem } from 'vscode-notebook-renderer';
@@ -206,7 +206,6 @@ function renderChart(results: KustoResponseDataSet, ele: HTMLElement) {
                 } as any;
                 plotData.push(scatterData);
             });
-            console.error(JSON.stringify(plotData));
             Plotly.newPlot(ele, plotData, layout);
         } else {
             const scatterData: Partial<Plotly.ScatterData> = {
@@ -243,7 +242,6 @@ function generateSunburstChart(ele: HTMLElement, results: KustoResponseDataSet, 
     const values: number[] = [];
 
     // Construct hierarchial data.
-    console.error(results.primaryResults[0]);
     results.primaryResults[0].columns.forEach((col, index) => {
         if (valueColumnIndex === index) {
             return;
@@ -298,6 +296,5 @@ function generateSunburstChart(ele: HTMLElement, results: KustoResponseDataSet, 
         hoverinfo: 'label+value+percent entry',
         branchvalues: 'total'
     } as any;
-    console.error(pieData);
     Plotly.newPlot(ele, [pieData], layout);
 }

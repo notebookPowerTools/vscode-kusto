@@ -1,11 +1,10 @@
-import { EOL } from 'os';
 import { commands, window } from 'vscode';
-import { createUntitledNotebook } from '../content/provider';
 import { registerDisposable } from '../utils';
 import { ClusterNode, DatabaseNode, KustoClusterExplorer, TableNode } from './treeData';
 import { addNewConnection } from '../kusto/connections/management';
 import { getCachedConnections, onConnectionChanged } from '../kusto/connections/storage';
 import { fromConnectionInfo } from '../kusto/connections';
+import { createUntitledNotebook } from '../content/data';
 
 export class ClusterTreeView {
     constructor(private readonly clusterExplorer: KustoClusterExplorer) {}
@@ -88,7 +87,7 @@ export class ClusterTreeView {
                 : dataBaseOrTableNote.parent.database.name;
         let cellCode = '';
         if (dataBaseOrTableNote instanceof TableNode) {
-            cellCode = [dataBaseOrTableNote.table.name, '| take 1'].join(EOL);
+            cellCode = [dataBaseOrTableNote.table.name, '| take 1'].join('\n');
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await createUntitledNotebook({ ...connectionInfo, database } as any, cellCode);

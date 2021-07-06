@@ -1,18 +1,19 @@
-import KustoClient from 'azure-kusto-data/source/client';
-import { KustoResponseDataSet } from 'azure-kusto-data/source/response';
+import type { KustoResponseDataSet } from 'azure-kusto-data/source/response';
 import { workspace, NotebookDocument, TextDocument } from 'vscode';
-import { Connection, fromConnectionInfo } from './connections';
-import { addDocumentConnectionHandler, ensureDocumentHasConnectionInfo } from './connections/notebookConnection';
-import { IConnectionInfo } from './connections/types';
+// import { addDocumentConnectionHandler, ensureDocumentHasConnectionInfo } from './connections/notebookConnection';
+import { IConnection, IConnectionInfo, IKustoClient } from './connections/types';
 import { IDisposable } from '../types';
-import { disposeAllDisposables, logError, registerDisposable } from '../utils';
+import { disposeAllDisposables, registerDisposable } from '../utils';
+import { fromConnectionInfo } from './connections/baseConnection';
+import { addDocumentConnectionHandler, ensureDocumentHasConnectionInfo } from './connections/notebookConnection';
+// import { toAzureAuthenticatedConnection } from './connections/azAuth/info';
 
 const clientMap = new WeakMap<NotebookDocument | TextDocument, Promise<Client | undefined>>();
 
 export class Client implements IDisposable {
     private readonly disposables: IDisposable[] = [];
-    private readonly kustoClient: Promise<KustoClient>;
-    private readonly connection: Connection;
+    private readonly kustoClient: Promise<IKustoClient>;
+    private readonly connection: IConnection<IConnectionInfo>;
     constructor(
         private readonly document: NotebookDocument | TextDocument,
         public readonly connectionInfo: IConnectionInfo
@@ -20,6 +21,7 @@ export class Client implements IDisposable {
         this.addHandlers();
         this.connection = fromConnectionInfo(connectionInfo);
         this.kustoClient = this.connection.getKustoClient();
+        addDocumentConnectionHandler((docOrTextDocument) => clientMap.delete(docOrTextDocument));
         registerDisposable(this);
     }
     public static async remove(document: NotebookDocument) {
@@ -40,7 +42,7 @@ export class Client implements IDisposable {
                 }
                 resolve(new Client(document, connectionInfo));
             } catch (ex) {
-                logError(`Failed to create the Kusto Client`, ex);
+                console.error(`Failed to create the Kusto Client`, ex);
                 resolve(undefined);
             }
         });

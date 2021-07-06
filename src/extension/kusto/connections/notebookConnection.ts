@@ -1,21 +1,23 @@
 import { EventEmitter, NotebookCell, NotebookCellKind, NotebookCellsChangeEvent, TextDocument, window } from 'vscode';
 import { commands, notebooks, NotebookDocument, Uri, workspace, WorkspaceEdit } from 'vscode';
 import { IConnectionInfo } from './types';
-import { debug, logError, registerDisposable } from '../../utils';
+import { registerDisposable } from '../../utils';
 import { isJupyterNotebook, isKustoNotebook } from '../../kernel/provider';
 import { isEqual } from 'lodash';
 import { captureConnectionFromUser } from './management';
-import { AzureAuthenticatedConnection } from './azAuth';
 import { getFromCache, updateCache } from '../../cache';
-import { getConnectionFromNotebookMetadata, updateMetadataWithConnectionInfo } from '../../content/provider';
-import { GlobalMementoKeys } from '../../constants';
+import { getConnectionFromNotebookMetadata, updateMetadataWithConnectionInfo } from '../../content/data';
+import { GlobalMementoKeys, useProposedApi } from '../../constants';
+import { AzureAuthenticatedConnection } from './azAuth';
 
 const onDidChangeConnection = new EventEmitter<NotebookDocument | TextDocument>();
 
 export function registerNotebookConnection() {
     registerDisposable(onDidChangeConnection);
     registerDisposable(commands.registerCommand('kusto.changeDocumentConnection', changDocumentConnection));
-    registerDisposable(notebooks.onDidChangeNotebookCells(onDidChangeJupyterNotebookCells));
+    if (useProposedApi()) {
+        registerDisposable(notebooks.onDidChangeNotebookCells(onDidChangeJupyterNotebookCells));
+    }
     registerDisposable(workspace.onDidChangeTextDocument((e) => onDidChangeJupyterNotebookCell(e.document)));
 }
 export function addDocumentConnectionHandler(cb: (document: NotebookDocument | TextDocument) => void) {
@@ -149,7 +151,7 @@ export function getConnectionInfoFromDocumentMetadata(
         if (isJupyterNotebook(document)) {
             connection = getConnectionInfoFromJupyterNotebook(document);
         } else {
-            connection  = getConnectionFromNotebookMetadata(document);
+            connection = getConnectionFromNotebookMetadata(document);
         }
     }
     if (connection && !getFromCache(GlobalMementoKeys.lastUsedConnection)) {
@@ -203,23 +205,28 @@ function getConnectionInfoFromJupyterNotebook(document: NotebookDocument): IConn
         const databaseIndex = parts.findIndex((item) => item.endsWith('database='));
         const clusterUri = `https://${parts[clusterIndex + 1]}.kusto.windows.net`;
         const database = parts[databaseIndex + 1];
-        debug(`Parsed ${text} & got ${clusterUri} & ${database}`);
-        const info = AzureAuthenticatedConnection.from({ cluster: clusterUri, database }).info;
+        console.debug(`Parsed ${text} & got ${clusterUri} & ${database}`);
+        const info = AzureAuthenticatedConnection.connectionInfofrom({ cluster: clusterUri, database });
         jupyterNotebookClusterAndDb.set(document, info);
         return info;
     } catch (ex) {
-        logError(`Failed to parse ${text} to get cluster & db`, ex);
+        console.error(`Failed to parse ${text} to get cluster & db`, ex);
         return;
     }
 }
 async function updateNotebookConnection(document: NotebookDocument, info: IConnectionInfo) {
-    if (!document.metadata.editable || isJupyterNotebook(document) || !isKustoNotebook(document)) {
+    if (isJupyterNotebook(document) || !isKustoNotebook(document)) {
+        console.error('oops');
         return;
     }
-    const edit = new WorkspaceEdit();
-    const metadata = JSON.parse(JSON.stringify(document.metadata)) || {};
-    updateMetadataWithConnectionInfo(metadata, info);
-    edit.replaceNotebookMetadata(document.uri, metadata);
-    await workspace.applyEdit(edit);
-    onDidChangeConnection.fire(document);
+    try {
+        const edit = new WorkspaceEdit();
+        const metadata = JSON.parse(JSON.stringify(document.metadata)) || {};
+        updateMetadataWithConnectionInfo(metadata, info);
+        edit.replaceNotebookMetadata(document.uri, metadata);
+        await workspace.applyEdit(edit);
+        onDidChangeConnection.fire(document);
+    } catch (ex) {
+        console.error('Failed in updateNotebookConnection', ex);
+    }
 }

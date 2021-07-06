@@ -1,5 +1,4 @@
-import * as path from 'path';
-export const EXTENSION_ROOT_DIR = path.join(__dirname, '..', '..');
+import { commands } from 'vscode';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export const noop = () => {};
@@ -12,4 +11,11 @@ export enum GlobalMementoKeys {
     prefixForClusterSchema = 'prefixForClusterSchema',
     prefixForDatabasesInACluster = 'prefixForDatabasesInACluster',
     prefixForTablesInAClusterDB = 'prefixForTablesInAClusterDB'
+}
+
+let _useProposedApi = false;
+export const useProposedApi = () => _useProposedApi;
+export function initialize(useProposedApi: boolean) {
+    _useProposedApi = useProposedApi;
+    commands.executeCommand('setContext', 'kusto.useProposedApi', useProposedApi);
 }

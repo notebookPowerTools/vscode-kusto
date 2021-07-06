@@ -1,6 +1,6 @@
 import { Uri } from 'vscode';
 import { DeepReadonly } from '../types';
-import { EngineSchema } from './schema';
+import type { EngineSchema } from './schema';
 
 export function getClusterDisplayName(clusterUri: string | EngineSchema | DeepReadonly<EngineSchema>) {
     let uri = '';

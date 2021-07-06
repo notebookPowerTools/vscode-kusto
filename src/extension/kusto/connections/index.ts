@@ -2,7 +2,7 @@ import { AppInsightsConnection } from './appInsights';
 import { AzureAuthenticatedConnection } from './azAuth';
 import { IConnectionInfo } from './types';
 
-export type Connection = AzureAuthenticatedConnection | AppInsightsConnection;
+// export type Connection = AzureAuthenticatedConnection | AppInsightsConnection;
 
 export function fromConnectionInfo(
     connectionInfo: IConnectionInfo

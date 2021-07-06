@@ -1,25 +1,31 @@
-import { KustoConnectionStringBuilder } from 'azure-kusto-data';
-import KustoClient from 'azure-kusto-data/source/client';
+import { KustoConnectionStringBuilder } from 'azure-kusto-data/source/connectionBuilder';
 import { authentication, env, Uri, window } from 'vscode';
 import { EngineSchema } from '../../schema';
 import { getClusterDisplayName } from '../../utils';
 import { BaseConnection } from '../baseConnection';
 import { updateConnectionCache } from '../storage';
-import { AzureAuthenticatedConnectionInfo } from '../types';
+import { AzureAuthenticatedConnectionInfo, IKustoClient, NewableKustoClient } from '../types';
 import { getClusterSchema } from './schema';
 
 export class AzureAuthenticatedConnection extends BaseConnection<AzureAuthenticatedConnectionInfo> {
+    private static KustoClientCtor: NewableKustoClient;
     constructor(info: AzureAuthenticatedConnectionInfo) {
-        super(info);
+        super('azAuth', info);
     }
-    public static from(info: { cluster: string; database?: string }) {
-        return new AzureAuthenticatedConnection({
+    public static registerKustoClient(ctor: NewableKustoClient) {
+        AzureAuthenticatedConnection.KustoClientCtor = ctor;
+    }
+    public static connectionInfofrom(info: { cluster: string; database?: string }): AzureAuthenticatedConnectionInfo {
+        return {
             cluster: info.cluster,
             database: info.database,
             displayName: getClusterDisplayName(info.cluster),
             id: info.cluster,
             type: 'azAuth'
-        });
+        };
+    }
+    public static from(info: { cluster: string; database?: string }) {
+        return new AzureAuthenticatedConnection(AzureAuthenticatedConnection.connectionInfofrom(info));
     }
     public async delete() {
         await updateConnectionCache({ info: this.info, action: 'remove' });
@@ -30,11 +36,11 @@ export class AzureAuthenticatedConnection extends BaseConnection<AzureAuthentica
     public getSchemaInternal(): Promise<EngineSchema> {
         return getClusterSchema(this.info);
     }
-    public async getKustoClient(): Promise<KustoClient> {
+    public async getKustoClient(): Promise<IKustoClient> {
         const accessToken = await this.getAccessToken();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const connection = this.getConnectionBuilder(this.info.cluster!, accessToken);
-        return new KustoClient(connection);
+        return new AzureAuthenticatedConnection.KustoClientCtor(connection);
     }
     private getConnectionBuilder(cluster: string, accessToken?: string) {
         if (accessToken) {

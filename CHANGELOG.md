@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1 (6 Jul 2021)
+
+### Enhancements
+
+1. Updates to changes in API
+
 ## 0.0.16 (9 Jun 2021)
 
 ### Enhancements

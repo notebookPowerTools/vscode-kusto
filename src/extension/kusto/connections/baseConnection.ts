@@ -1,16 +1,54 @@
-import KustoClient from 'azure-kusto-data/source/client';
 import { ProgressLocation, window } from 'vscode';
 import { getFromCache, updateCache } from '../../cache';
 import { GlobalMementoKeys } from '../../constants';
+import { KustoNotebookConnectionMetadata } from '../../content/provider';
 import { EngineSchema } from '../schema';
-import { IConnection, IConnectionInfo } from './types';
+import { IConnection, IConnectionInfo, IKustoClient } from './types';
+
+const connectionProviders = new Map<
+    string,
+    {
+        connectionCtor: NewableConnection;
+        resolver: (metadata: KustoNotebookConnectionMetadata) => IConnectionInfo | undefined;
+    }
+>();
+
+interface NewableConnection {
+    new (info: any): IConnection<IConnectionInfo>;
+}
+export function registerConnection<T extends IConnectionInfo>(
+    connection: string,
+    connectionCtor: NewableConnection,
+    resolver: (metadata: KustoNotebookConnectionMetadata) => T | undefined
+) {
+    connectionProviders.set(connection, {
+        connectionCtor,
+        resolver
+    });
+}
+export function fromMetadata(metadata: KustoNotebookConnectionMetadata): IConnectionInfo | undefined {
+    for (const provider of Array.from(connectionProviders.values())) {
+        const item = provider.resolver(metadata);
+        if (item) {
+            return item;
+        }
+    }
+}
+
+export function fromConnectionInfo<T extends IConnectionInfo>(info: IConnectionInfo): IConnection<T> {
+    const provider = connectionProviders.get(info.type);
+    if (!provider) {
+        throw new Error(`Provider '${info.type}' not supported`);
+    }
+    return new provider.connectionCtor(info) as IConnection<T>;
+}
 
 export abstract class BaseConnection<T extends IConnectionInfo> implements IConnection<T> {
     private schema?: Promise<EngineSchema>;
     private get schemaCacheId() {
         return `${GlobalMementoKeys.prefixForClusterSchema}:${this.info.id.toLowerCase()}`;
     }
-    constructor(public readonly info: T) {}
+    constructor(public readonly name: string, public readonly info: T) {}
     public async getSchema(ignoreCache?: boolean): Promise<EngineSchema> {
         const key = `${GlobalMementoKeys.prefixForClusterSchema}:${this.info.id.toLowerCase()}`;
         if (this.schema && !ignoreCache) {
@@ -42,5 +80,5 @@ export abstract class BaseConnection<T extends IConnectionInfo> implements IConn
     abstract getSchemaInternal(): Promise<EngineSchema>;
     abstract delete(): Promise<void>;
     abstract save(): Promise<void>;
-    abstract getKustoClient(): Promise<KustoClient>;
+    abstract getKustoClient(): Promise<IKustoClient>;
 }

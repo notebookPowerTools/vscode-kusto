@@ -1,11 +1,11 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
-import { KustoResponseDataSet } from 'azure-kusto-data/source/response';
-import { commands, NotebookCellData, NotebookCellKind, NotebookData, NotebookDocument, Uri, workspace } from 'vscode';
-import { isKustoNotebook } from '../kernel/provider';
+import type { KustoResponseDataSet } from 'azure-kusto-data/source/response';
+import { NotebookCellData, NotebookCellKind, NotebookData, workspace } from 'vscode';
 import { getCellOutput } from '../output/chart';
-import { debug, isUntitledFile, registerDisposable } from '../utils';
+import { registerDisposable } from '../utils';
+import { getNotebookMetadata, updateMetadataWithConnectionInfo } from './data';
 import { IConnectionInfo } from '../kusto/connections/types';
+import { fromMetadata } from '../kusto/connections/baseConnection';
 import { AzureAuthenticatedConnection } from '../kusto/connections/azAuth';
 import { getCachedConnections } from '../kusto/connections/storage';
 
@@ -22,7 +22,7 @@ type KustoCell = {
     outputs: KustoResponseDataSet[];
     metadata?: KustoCellMetadata;
 };
-type KustoNotebookConnectionMetadata =
+export type KustoNotebookConnectionMetadata =
     | {
           cluster: string;
           database: string;
@@ -32,18 +32,20 @@ type KustoNotebookMetadata = {
     locked?: boolean;
     connection?: KustoNotebookConnectionMetadata;
 };
-type KustoNotebook = {
+export type KustoNotebook = {
     cells: KustoCell[];
     metadata?: KustoNotebookMetadata;
 };
 
 export class ContentProvider implements vscode.NotebookSerializer {
+    public static decoder = new TextDecoder();
+    public static encoder = new TextEncoder();
     constructor(private readonly _persistOutputs: boolean) {}
     deserializeNotebook(
         content: Uint8Array,
         _token: vscode.CancellationToken
     ): vscode.NotebookData | Thenable<vscode.NotebookData> {
-        const js = Buffer.from(content).toString('utf8');
+        const js = ContentProvider.decoder.decode(content);
         try {
             const notebook: KustoNotebook = js.length ? JSON.parse(js) : { cells: [] };
             const cells = notebook.cells.map((item) => {
@@ -71,12 +73,12 @@ export class ContentProvider implements vscode.NotebookSerializer {
             }
 
             if (connectionInNotebookMetadata) {
-                let connection: IConnectionInfo | undefined;
+                let connection: IConnectionInfo | undefined = fromMetadata(connectionInNotebookMetadata);
                 if ('cluster' in connectionInNotebookMetadata) {
-                    connection = AzureAuthenticatedConnection.from({
+                    connection = AzureAuthenticatedConnection.connectionInfofrom({
                         cluster: connectionInNotebookMetadata.cluster,
                         database: connectionInNotebookMetadata.database
-                    }).info;
+                    });
                 }
                 if ('appInsightsId' in connectionInNotebookMetadata) {
                     const appInsightsId = connectionInNotebookMetadata.appInsightsId;
@@ -84,28 +86,11 @@ export class ContentProvider implements vscode.NotebookSerializer {
                 }
                 updateMetadataWithConnectionInfo(metadata, connection);
             }
-            // let metadata = {
-            //     cellEditable: true, // !notebook.metadata?.locked,
-            //     editable: true, //!notebook.metadata?.locked,
-            //     trusted: true,
-            //     custom
-            // };
-            // if (isKustoInteractive(uri)) {
-            //     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //     //@ts-ignore
-            //     metadata = {
-            //         cellEditable: false,
-            //         editable: false,
-            //         trusted: true
-            //     };
-            // }
-            console.log(metadata);
-            console.log(cells);
             const notebookData = new NotebookData(cells);
             notebookData.metadata = metadata;
             return notebookData;
         } catch (ex) {
-            debug('Failed to parse notebook contents', ex);
+            console.error('Failed to parse notebook contents', ex);
             return new NotebookData([]);
         }
     }
@@ -124,7 +109,7 @@ export class ContentProvider implements vscode.NotebookSerializer {
                             outputItem.mime.startsWith('application/vnd.kusto.result')
                         );
                         if (kustoOutputItem?.data) {
-                            const data = Buffer.from(kustoOutputItem.data).toString('utf8');
+                            const data = ContentProvider.decoder.decode(kustoOutputItem.data);
                             output = output || (JSON.parse(data) as KustoResponseDataSet);
                         }
                     });
@@ -144,9 +129,6 @@ export class ContentProvider implements vscode.NotebookSerializer {
                 if (cell.metadata?.outputCollapsed === true) {
                     cellMetadata.outputCollapsed = true;
                 }
-                // if (cell.metadata.editable === false) {
-                // cellMetadata.locked = true;
-                // }
                 if (Object.keys(cellMetadata).length) {
                     kustoCell.metadata = cellMetadata;
                 }
@@ -159,7 +141,7 @@ export class ContentProvider implements vscode.NotebookSerializer {
             notebook.metadata = getNotebookMetadata(connection);
         }
 
-        return Buffer.from(JSON.stringify(notebook, undefined, 4));
+        return ContentProvider.encoder.encode(JSON.stringify(notebook, undefined, 4));
     }
 
     public static register() {
@@ -174,68 +156,4 @@ export class ContentProvider implements vscode.NotebookSerializer {
         );
         registerDisposable(disposable);
     }
-}
-
-export function getNotebookMetadata(connection?: IConnectionInfo) {
-    const notebookMetadata: KustoNotebookMetadata = {};
-    if (connection) {
-        switch (connection.type) {
-            case 'azAuth':
-                notebookMetadata.connection = {
-                    cluster: connection.cluster,
-                    database: connection.database || ''
-                };
-                break;
-            case 'appInsights':
-                notebookMetadata.connection = {
-                    appInsightsId: connection.id
-                };
-        }
-    }
-    return notebookMetadata;
-}
-export function getConnectionFromNotebookMetadata(document: NotebookDocument) {
-    const metadata: KustoNotebookMetadata = document.metadata;
-    const connection = metadata?.connection;
-    if (connection) {
-        if ('cluster' in connection) {
-            return AzureAuthenticatedConnection.from(connection).info;
-        }
-    }
-}
-const contentsForNextUntitledFile = new Map<string, KustoNotebook>();
-export async function createUntitledNotebook(connection?: IConnectionInfo, cellText?: string) {
-    const name = `${createUntitledFileName()}.knb`;
-    const uri = Uri.file(name).with({ scheme: 'untitled', path: name });
-    const contents: KustoNotebook = {
-        // We don't want to create an empty notebook (add at least one blank cell)
-        cells: typeof cellText === 'string' ? [{ kind: 'code', source: cellText, outputs: [] }] : [],
-        metadata: getNotebookMetadata(connection)
-    };
-    contentsForNextUntitledFile.set(uri.fsPath.toString(), contents);
-    await commands.executeCommand('vscode.openWith', uri, 'kusto-notebook');
-}
-
-export function updateMetadataWithConnectionInfo(metadata: Record<string, unknown>, connection?: IConnectionInfo) {
-    metadata.connection = connection ? JSON.parse(JSON.stringify(connection)) : undefined;
-}
-export function getConnectionFromMetadata(metadata: Record<string, unknown>, connection?: IConnectionInfo) {
-    metadata.connection = connection ? JSON.parse(JSON.stringify(connection)) : undefined;
-}
-function createUntitledFileName() {
-    const untitledNumbers = new Set(
-        workspace.notebookDocuments
-            .filter((item) => (isKustoNotebook(item) && item.isUntitled) || isUntitledFile(item.uri))
-            .map((item) => path.basename(item.uri.fsPath.toLowerCase(), '.knb'))
-            .filter((item) => item.includes('-'))
-            .map((item) => parseInt(item.split('-')[1], 10))
-            .filter((item) => !isNaN(item))
-    );
-    for (let index = 1; index <= untitledNumbers.size + 1; index++) {
-        if (!untitledNumbers.has(index)) {
-            return `Untitled-${index}`;
-        }
-        continue;
-    }
-    return `Untitled-${untitledNumbers.size + 1}`;
 }

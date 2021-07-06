@@ -1,4 +1,3 @@
-import { EOL } from 'os';
 import { commands, NotebookCell, NotebookCellKind, Uri, window, workspace } from 'vscode';
 import { isKustoNotebook } from '../kernel/provider';
 import { registerDisposable } from '../utils';
@@ -29,7 +28,8 @@ async function exportNotebook(uri?: Uri) {
             'Jupyter Notebook': ['ipynb']
         },
         saveLabel: 'Export',
-        title: 'Export as Kusto Notebook'
+        title: 'Export as Kusto Notebook',
+        defaultUri: Uri.parse('export.csl')
     });
     if (!target) {
         return;
@@ -83,13 +83,13 @@ async function exportNotebook(uri?: Uri) {
         };
         script = JSON.stringify(jupyterNotebook, undefined, 4);
     } else {
-        script = document.getCells().map(convertCell).join(`${EOL}${EOL}`);
+        script = document.getCells().map(convertCell).join('\n\n');
     }
     // Ensure the connection information is updated, so that its upto date if/when its opened in VS Code.
     const updateConnectionPromise = connection
         ? updateCache(target.toString().toLowerCase(), connection)
         : Promise.resolve();
-    await Promise.all([workspace.fs.writeFile(target, Buffer.from(script)), updateConnectionPromise]);
+    await Promise.all([workspace.fs.writeFile(target, new TextEncoder().encode(script)), updateConnectionPromise]);
 }
 
 function convertCell(cell: NotebookCell): string {
@@ -100,7 +100,7 @@ function convertMarkdownCell(cell: NotebookCell): string {
         .getText()
         .split(/\r?\n/g)
         .map((line) => `// ${line}`)
-        .join(EOL);
+        .join('\n');
 }
 function convertCodeCell(cell: NotebookCell): string {
     return cell.document.getText();

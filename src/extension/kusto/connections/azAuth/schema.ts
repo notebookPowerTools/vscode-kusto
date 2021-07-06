@@ -1,6 +1,5 @@
-import KustoClient from 'azure-kusto-data/source/client';
-import { AzureAuthenticatedConnectionInfo } from '../types';
-import { Database, EngineSchema, Function, InputParameter, Table, TableEntityType } from '../../schema';
+import type { AzureAuthenticatedConnectionInfo, IKustoClient } from '../types';
+import type { Database, EngineSchema, Function, InputParameter, Table, TableEntityType } from '../../schema';
 import { GlobalMementoKeys } from '../../../constants';
 import { getFromCache, updateCache } from '../../../cache';
 import { fromConnectionInfo } from '..';
@@ -24,7 +23,7 @@ export async function getClusterSchema(connection: AzureAuthenticatedConnectionI
 }
 
 const databasePromises = new Map<string, Promise<string[]>>();
-async function getDatabases(client: KustoClient, clusterUri: string, ignoreCache?: boolean): Promise<string[]> {
+async function getDatabases(client: IKustoClient, clusterUri: string, ignoreCache?: boolean): Promise<string[]> {
     const key = `${GlobalMementoKeys.prefixForDatabasesInACluster}:${clusterUri.toLowerCase()}`;
     let promise = databasePromises.get(key);
     if (promise && !ignoreCache) {
@@ -150,7 +149,7 @@ function translateResponseFunctionToSchemaFunction(fn: FunctionSchema): Function
     };
 }
 async function getDatabaseSchema(
-    client: KustoClient,
+    client: IKustoClient,
     connection: AzureAuthenticatedConnectionInfo,
     ignoreCache?: boolean
 ): Promise<Database> {

@@ -4,7 +4,6 @@ import { getCachedConnections } from '../kusto/connections/storage';
 import { IConnectionInfo } from '../kusto/connections/types';
 import { Column, Database, EngineSchema, Table } from '../kusto/schema';
 import { DeepReadonly, IDisposable } from '../types';
-import { logError } from '../utils';
 
 export type NodeType = 'cluster' | 'database' | 'table' | 'column';
 export interface ITreeData {
@@ -153,14 +152,16 @@ export class KustoClusterExplorer implements TreeDataProvider<ITreeData>, IDispo
         if (this.connections.length === 0) {
             await Promise.all(
                 connections.map((clusterUri) =>
-                    this.addConnection(clusterUri).catch((ex) => logError(`Failed to add cluster ${clusterUri}`, ex))
+                    this.addConnection(clusterUri).catch((ex) =>
+                        console.error(`Failed to add cluster ${clusterUri}`, ex)
+                    )
                 )
             );
         } else {
             await Promise.all(
                 connections.map((item) =>
                     this.refreshConnection(item).catch((ex) =>
-                        logError(`Failed to add cluster ${JSON.stringify(item)}`, ex)
+                        console.error(`Failed to add cluster ${JSON.stringify(item)}`, ex)
                     )
                 )
             );

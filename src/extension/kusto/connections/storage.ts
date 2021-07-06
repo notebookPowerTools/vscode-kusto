@@ -1,7 +1,7 @@
 import { EventEmitter, ExtensionContext, Memento, SecretStorage } from 'vscode';
 import { getFromCache, updateCache } from '../../cache';
 import { GlobalMementoKeys, noop } from '../../constants';
-import { logError, registerDisposable } from '../../utils';
+import { registerDisposable } from '../../utils';
 import { AzureAuthenticatedConnection } from './azAuth';
 import { IConnectionInfo } from './types';
 
@@ -19,7 +19,7 @@ async function migrateCachedConnections() {
         return;
     }
     if (cachedConnections.length === 0 && clusters.length) {
-        const connectionsToCache = clusters.map((cluster) => AzureAuthenticatedConnection.from({ cluster }).info);
+        const connectionsToCache = clusters.map((cluster) => AzureAuthenticatedConnection.from({ cluster }));
         await memento.update(cachedKustoConnectionsKey, connectionsToCache);
         await updateCache(GlobalMementoKeys.clusterUris, undefined);
         return;
@@ -80,7 +80,7 @@ export async function updateConnectionCache(options: {
                 onDidChangeConnection.fire({ connection: options.info, change: 'removed' });
             }
         })
-        .catch((ex) => logError('Failed in performing an update', ex))
+        .catch((ex) => console.error('Failed in performing an update', ex))
         .then(noop);
     await pendingUpdatesPromise;
 }

@@ -1,6 +1,5 @@
 import { QuickInputButtons, QuickPickItem, ThemeIcon } from 'vscode';
 import { ReadWrite } from '../../types';
-import { logError } from '../../utils';
 import { create, InputFlowAction, MultiStepInput } from './multiStepInput';
 import { AppInsightsConnectionSecrets, IConnectionInfo } from './types';
 import { getCachedConnections } from './storage';
@@ -246,7 +245,7 @@ async function validateClusterConnection(clusterUri = ''): Promise<string | unde
         const info = AzureAuthenticatedConnection.from({ cluster: clusterUri }).info;
         await fromConnectionInfo(info).getSchema();
     } catch (ex) {
-        logError(`Cluster Uri is incorrect or unable to authenticate ${clusterUri}`, ex);
+        console.error(`Cluster Uri is incorrect or unable to authenticate ${clusterUri}`, ex);
         return 'Cluster Uri is incorrect or authentication failed';
     }
 }

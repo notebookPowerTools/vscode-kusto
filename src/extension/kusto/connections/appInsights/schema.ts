@@ -1,5 +1,4 @@
-import KustoClient from 'azure-kusto-data/source/client';
-import { AppInsightsConnectionInfo, AppInsightsConnectionSecrets } from '../types';
+import { AppInsightsConnectionInfo, AppInsightsConnectionSecrets, IKustoClient } from '../types';
 import { EngineSchema } from '../../schema';
 import { fromConnectionInfo } from '..';
 import * as axios from 'axios';
@@ -13,7 +12,7 @@ export async function getClusterSchema(
     return getSchema(client, secrets);
 }
 
-async function getSchema(client: KustoClient, secrets: AppInsightsConnectionSecrets): Promise<EngineSchema> {
+async function getSchema(client: IKustoClient, secrets: AppInsightsConnectionSecrets): Promise<EngineSchema> {
     const headers: Record<string, string> = JSON.parse(JSON.stringify(client.headers));
     headers['Prefer'] = 'ai.response-thinning=false';
     headers['x-api-key'] = secrets.appKey;
