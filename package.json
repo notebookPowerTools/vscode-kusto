@@ -2,7 +2,7 @@
     "name": "kusto",
     "displayName": "Kusto Notebooks",
     "description": "Run Kusto Queries in Notebooks",
-    "version": "0.3.2",
+    "version": "0.3.3",
     "engines": {
         "vscode": "^1.57.0"
     },
@@ -29,6 +29,11 @@
         "notebook",
         "kusto",
         "multi-root ready"
+    ],
+    "extensionKind": [
+        "web",
+        "ui",
+        "workspace"
     ],
     "categories": [
         "Other",

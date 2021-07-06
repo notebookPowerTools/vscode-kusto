@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.2 (6 Jul 2021)
+## 0.3.3 (6 Jul 2021)
 
 ### Enhancements
 
