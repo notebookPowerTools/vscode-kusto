@@ -2,7 +2,7 @@
     "name": "kusto",
     "displayName": "Kusto Notebooks",
     "description": "Run Kusto Queries in Notebooks",
-    "version": "0.3.3",
+    "version": "0.3.4",
     "engines": {
         "vscode": "^1.57.0"
     },
@@ -40,6 +40,12 @@
         "Notebooks",
         "Visualization"
     ],
+    "capabilities": {
+        "untrustedWorkspaces": {
+            "supported": true
+        },
+        "virtualWorkspaces": true
+    },
     "activationEvents": [
         "onLanguage:kusto",
         "onLanguage:python",
@@ -56,7 +62,7 @@
         "onCommand:kusto.changeDocumentConnection"
     ],
     "main": "./out/extension/index.js",
-    "browser": "./out/extension/browser",
+    "browser": "./out/extension/browser.js",
     "contributes": {
         "configuration": {
             "type": "object",
