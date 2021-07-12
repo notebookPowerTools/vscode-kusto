@@ -1,8 +1,7 @@
 import { EventEmitter, NotebookCell, NotebookCellKind, NotebookCellsChangeEvent, TextDocument, window } from 'vscode';
 import { commands, notebooks, NotebookDocument, Uri, workspace, WorkspaceEdit } from 'vscode';
 import { IConnectionInfo } from './types';
-import { registerDisposable } from '../../utils';
-import { isJupyterNotebook, isKustoNotebook } from '../../kernel/provider';
+import { isJupyterNotebook, isKustoNotebook, registerDisposable } from '../../utils';
 import { isEqual } from 'lodash';
 import { captureConnectionFromUser } from './management';
 import { getFromCache, updateCache } from '../../cache';

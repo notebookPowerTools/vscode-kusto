@@ -137,3 +137,14 @@ export function getHash(value: string) {
 export function getNotebookDocument(document: TextDocument | NotebookDocument): NotebookDocument | undefined {
     return workspace.notebookDocuments.find((item) => item.uri.path === document.uri.path);
 }
+export function isJupyterNotebook(document?: NotebookDocument) {
+    return document?.notebookType === 'jupyter-notebook';
+}
+export function isKustoNotebook(document: NotebookDocument) {
+    return document.notebookType === 'kusto-notebook';
+}
+export const InteractiveWindowView = 'interactive';
+export const InteractiveWindowScheme = 'vscode-interactive';
+export function isInteractiveWindow(document: NotebookDocument) {
+    return document.notebookType === InteractiveWindowView;
+}

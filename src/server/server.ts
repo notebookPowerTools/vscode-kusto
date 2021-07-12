@@ -72,6 +72,9 @@ function isKustoFile(document: TextDocument) {
     return !isNotebookCell(document) && document.languageId === 'kusto';
 }
 function isInteractiveDocument(document: TextDocument) {
+    if (document.uri.toLowerCase().includes('vscode-interactive')) {
+        return true;
+    }
     if (!isNotebookCell(document)) {
         return false;
     }
@@ -163,7 +166,9 @@ connection.onFoldingRanges(async ({ textDocument }) => {
         return null;
     }
     connection.console.log(`Provide folding ${document.uri.toString()}`);
-    return doFolding(document);
+    const ranges = await doFolding(document);
+    connection.sendNotification('foldingRanges', { uri: document.uri.toString(), foldingRanges: ranges });
+    return ranges;
 });
 
 // Make the text document manager listen on the connection
