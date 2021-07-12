@@ -18,6 +18,7 @@ import { AzureAuthenticatedConnection } from './kusto/connections/azAuth';
 import KustoClient from 'azure-kusto-data/source/client';
 import { registerConnection } from './kusto/connections/baseConnection';
 import { AppInsightsConnection } from './kusto/connections/appInsights';
+import { CellCodeLensProvider } from './interactive/cells';
 
 let client: LanguageClient;
 
@@ -44,6 +45,7 @@ export async function activate(context: ExtensionContext) {
     monitorJupyterCells();
     registerInteractiveExperience();
     registerExportCommand();
+    CellCodeLensProvider.regsiter();
 }
 
 export async function deactivate(): Promise<void> {

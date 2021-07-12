@@ -1,7 +1,6 @@
 import { languages, NotebookCellKind, NotebookDocument, notebooks, TextDocument, workspace } from 'vscode';
 import { useProposedApi } from '../constants';
-import { isJupyterNotebook } from '../kernel/provider';
-import { registerDisposable } from '../utils';
+import { isJupyterNotebook, registerDisposable } from '../utils';
 
 export function monitorJupyterCells() {
     registerDisposable(workspace.onDidOpenNotebookDocument(updateKustoCellsOfDocument));

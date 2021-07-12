@@ -8,11 +8,12 @@ import {
     WorkspaceEdit,
     NotebookController,
     ExtensionContext,
-    Disposable
+    Disposable,
+    TextDocument
 } from 'vscode';
 import { Client } from '../kusto/client';
 import { getChartType } from '../output/chart';
-import { createPromiseFromToken } from '../utils';
+import { createPromiseFromToken, InteractiveWindowView } from '../utils';
 
 export class KernelProvider {
     public static register(context: ExtensionContext) {
@@ -21,25 +22,20 @@ export class KernelProvider {
 }
 
 export class Kernel extends Disposable {
-    controller: NotebookController;
+    notebookController: NotebookController;
+    public readonly interactiveController: NotebookController;
+    public static instance: Kernel;
     constructor() {
         super(() => {
             this.dispose();
         });
-        this.controller = notebooks.createNotebookController(
-            'kusto',
-            'kusto-notebook',
-            'Kusto',
-            this.execute.bind(this),
-            []
-        );
-        this.controller.supportedLanguages = ['kusto'];
-        this.controller.supportsExecutionOrder = true;
-        this.controller.description = 'Execute Kusto Queries';
+        this.notebookController = this.createController('kusto', 'kusto-notebook');
+        this.interactiveController = this.createController('kustoInteractive', InteractiveWindowView);
+        Kernel.instance = this;
     }
 
     dispose() {
-        this.controller.dispose();
+        this.notebookController.dispose();
     }
 
     public execute(cells: NotebookCell[], notebook: NotebookDocument, controller: NotebookController) {
@@ -47,10 +43,26 @@ export class Kernel extends Disposable {
             this.executeCell(cell, controller);
         });
     }
+    public executeInteractive(cells: NotebookCell[], textDocument: TextDocument, controller: NotebookController) {
+        cells.forEach((cell) => {
+            this.executeCell(cell, controller, textDocument);
+        });
+    }
 
-    private async executeCell(cell: NotebookCell, controller: NotebookController): Promise<void> {
+    private createController(id: string, view: string) {
+        const controller = notebooks.createNotebookController(id, view, 'Kusto', this.execute.bind(this), []);
+        controller.supportedLanguages = ['kusto'];
+        controller.supportsExecutionOrder = true;
+        controller.description = 'Execute Kusto Queries';
+        return controller;
+    }
+    private async executeCell(
+        cell: NotebookCell,
+        controller: NotebookController,
+        textDocument?: TextDocument
+    ): Promise<void> {
         const task = controller.createNotebookCellExecution(cell);
-        const client = await Client.create(cell.notebook);
+        const client = await Client.create(textDocument || cell.notebook);
         if (!client) {
             task.end(false);
             return;
@@ -117,11 +129,4 @@ export class Kernel extends Disposable {
             task.end(success, Date.now());
         }
     }
-}
-
-export function isJupyterNotebook(document?: NotebookDocument) {
-    return document?.notebookType === 'jupyter-notebook';
-}
-export function isKustoNotebook(document: NotebookDocument) {
-    return document.notebookType === 'kusto-notebook';
 }
