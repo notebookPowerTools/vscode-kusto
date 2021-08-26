@@ -24,7 +24,7 @@ export type IConnectionInfo = AzureAuthenticatedConnectionInfo | AppInsightsConn
 
 export interface IConnection<T extends IConnectionInfo> {
     readonly info: T;
-    getSchema(ignoreCache?: boolean): Promise<EngineSchema>;
+    getSchema(options?: { ignoreCache?: boolean; hideProgress?: boolean }): Promise<EngineSchema>;
     delete(): Promise<void>;
     save(): Promise<void>;
     getKustoClient(): Promise<IKustoClient>;

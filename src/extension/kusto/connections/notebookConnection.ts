@@ -205,7 +205,7 @@ function getConnectionInfoFromJupyterNotebook(document: NotebookDocument): IConn
         const databaseIndex = parts.findIndex((item) => item.endsWith('database='));
         const clusterUri = `https://${parts[clusterIndex + 1]}.kusto.windows.net`;
         const database = parts[databaseIndex + 1];
-        console.debug(`Parsed ${text} & got ${clusterUri} & ${database}`);
+        // console.debug(`Parsed ${text} & got ${clusterUri} & ${database}`);
         const info = AzureAuthenticatedConnection.connectionInfofrom({ cluster: clusterUri, database });
         jupyterNotebookClusterAndDb.set(document, info);
         return info;

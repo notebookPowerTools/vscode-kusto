@@ -81,6 +81,11 @@ async function sendSchemaForDocument(document: NotebookDocument | TextDocument) 
     if (isNotebookCell(document) && notebook && (isJupyterNotebook(notebook) || isKustoNotebook(notebook))) {
         document = notebook;
     }
+    // If not a notebook, then its a text document
+    // If textdocument & language is not kusto, then ignore this.
+    if (!isNotebookCell(document) && !notebook && 'languageId' in document && document.languageId !== 'kusto') {
+        return;
+    }
     const info = getConnectionInfoFromDocumentMetadata(document);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!info || !shouldSendSchemaToLanguageServer(document, info as any)) {
@@ -88,7 +93,7 @@ async function sendSchemaForDocument(document: NotebookDocument | TextDocument) 
     }
     lastSentConnectionForDocument.set(document, info);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const engineSchema = await fromConnectionInfo(info as any).getSchema();
+    const engineSchema = await fromConnectionInfo(info as any).getSchema({ hideProgress: true });
     const clone: EngineSchema = JSON.parse(JSON.stringify(engineSchema));
     if ('database' in info) {
         clone.database = engineSchema.cluster.databases.find(
@@ -117,10 +122,14 @@ function sendSchemaForDocuments() {
     }
 }
 function sendSchemaForDocumentsToWebLanguageServer() {
+    const sentSchemas = new Set<string>();
     pendingSchemas.forEach((engineSchema, documentOrNotebook) => {
-        console.debug(
-            `Sending schema for ${documentOrNotebook} ${engineSchema.cluster.connectionString}: ${engineSchema.database?.name}`
-        );
+        const message = `Sending schema for ${documentOrNotebook} ${engineSchema.cluster.connectionString}: ${engineSchema.database?.name}`;
+        if (sentSchemas.has(message)) {
+            return;
+        }
+        sentSchemas.add(message);
+        console.debug(message);
         setDocumentEngineSchema(documentOrNotebook, engineSchema);
     });
     pendingSchemas.clear();
@@ -130,10 +139,14 @@ function sendSchemaForDocumentsToNodeLanguageServer() {
     if (!client || !clientIsReady) {
         return;
     }
+    const sentSchemas = new Set<string>();
     pendingSchemas.forEach((engineSchema, documentOrNotebook) => {
-        console.debug(
-            `Sending schema for ${documentOrNotebook} ${engineSchema.cluster.connectionString}: ${engineSchema.database?.name}`
-        );
+        const message = `Sending schema for ${documentOrNotebook} ${engineSchema.cluster.connectionString}: ${engineSchema.database?.name}`;
+        if (sentSchemas.has(message)) {
+            return;
+        }
+        console.debug(message);
+        console.debug(message);
         client.sendNotification('setSchema', {
             uri: documentOrNotebook.uri.toString(),
             engineSchema

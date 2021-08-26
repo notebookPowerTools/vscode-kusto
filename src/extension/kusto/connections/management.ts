@@ -243,7 +243,7 @@ async function validateClusterConnection(clusterUri = ''): Promise<string | unde
     }
     try {
         const info = AzureAuthenticatedConnection.from({ cluster: clusterUri }).info;
-        await fromConnectionInfo(info).getSchema();
+        await fromConnectionInfo(info).getSchema({ hideProgress: true });
     } catch (ex) {
         console.error(`Cluster Uri is incorrect or unable to authenticate ${clusterUri}`, ex);
         return 'Cluster Uri is incorrect or authentication failed';

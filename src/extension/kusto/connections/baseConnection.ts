@@ -49,7 +49,8 @@ export abstract class BaseConnection<T extends IConnectionInfo> implements IConn
         return `${GlobalMementoKeys.prefixForClusterSchema}:${this.info.id.toLowerCase()}`;
     }
     constructor(public readonly name: string, public readonly info: T) {}
-    public async getSchema(ignoreCache?: boolean): Promise<EngineSchema> {
+    public async getSchema(options?: { ignoreCache?: boolean; hideProgress?: boolean }): Promise<EngineSchema> {
+        const ignoreCache = options?.ignoreCache;
         const key = `${GlobalMementoKeys.prefixForClusterSchema}:${this.info.id.toLowerCase()}`;
         if (this.schema && !ignoreCache) {
             return this.schema;
@@ -58,6 +59,16 @@ export abstract class BaseConnection<T extends IConnectionInfo> implements IConn
         const cache = getFromCache<EngineSchema>(key);
         if (cache && !ignoreCache) {
             return JSON.parse(JSON.stringify(cache));
+        }
+
+        if (options?.hideProgress) {
+            try {
+                const schema = await this.getSchemaInternal();
+                await updateCache(this.schemaCacheId, schema);
+                return schema;
+            } finally {
+                this.schema = undefined;
+            }
         }
         this.schema = new Promise<EngineSchema>((resolve, reject) =>
             window
