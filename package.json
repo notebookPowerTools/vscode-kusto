@@ -32,8 +32,7 @@
     ],
     "extensionKind": [
         "ui",
-        "workspace",
-        "web"
+        "workspace"
     ],
     "categories": [
         "Other",
