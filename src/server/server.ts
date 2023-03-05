@@ -72,6 +72,9 @@ function isKustoFile(document: TextDocument) {
     return !isNotebookCell(document) && document.languageId === 'kusto';
 }
 function isInteractiveDocument(document: TextDocument) {
+    if (document.uri.toLowerCase().includes('vscode-interactive')) {
+        return true;
+    }
     if (!isNotebookCell(document)) {
         return false;
     }
