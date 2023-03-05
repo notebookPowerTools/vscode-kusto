@@ -13,6 +13,9 @@
 import type { ActivationFunction, OutputItem } from 'vscode-notebook-renderer';
 import type { KustoResponseDataSet } from 'azure-kusto-data/source/response';
 import type * as PlotlyType from 'plotly.js';
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-var-requires
 const Plotly: typeof PlotlyType = require('plotly.js/dist/plotly');
 // const Plotly: typeof PlotlyType = require('plotly.js');

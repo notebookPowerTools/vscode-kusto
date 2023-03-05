@@ -138,7 +138,7 @@ export class BrowserLanguageCapabilityProvider
     public async provideHover(
         document: TextDocument,
         position: Position,
-        token: CancellationToken
+        _token: CancellationToken
     ): Promise<Hover | undefined> {
         const ls = getLanguageServer(document);
         if (!ls) {
@@ -149,8 +149,8 @@ export class BrowserLanguageCapabilityProvider
     }
     public async provideDocumentFormattingEdits(
         document: TextDocument,
-        options: FormattingOptions,
-        token: CancellationToken
+        _options: FormattingOptions,
+        _token: CancellationToken
     ): Promise<TextEdit[]> {
         const ls = getLanguageServer(document);
         if (!ls || isAJupyterCellThatCanBeIgnored(document)) {
@@ -176,7 +176,7 @@ export class BrowserLanguageCapabilityProvider
         document: TextDocument,
         position: Position,
         newName: string,
-        token: CancellationToken
+        _token: CancellationToken
     ): Promise<WorkspaceEdit | undefined> {
         const ls = getLanguageServer(document);
         if (!ls || isAJupyterCellThatCanBeIgnored(document)) {
@@ -187,8 +187,8 @@ export class BrowserLanguageCapabilityProvider
     }
     public async provideFoldingRanges(
         document: TextDocument,
-        context: FoldingContext,
-        token: CancellationToken
+        _context: FoldingContext,
+        _token: CancellationToken
     ): Promise<FoldingRange[]> {
         const ls = getLanguageServer(document);
         if (!ls) {

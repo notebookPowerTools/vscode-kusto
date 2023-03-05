@@ -8,6 +8,8 @@ import axios from 'axios';
 import * as moment from 'moment';
 import * as uuid from 'uuid';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 const COMMAND_TIMEOUT_IN_MILLISECS = moment.duration(10.5, 'minutes').asMilliseconds();
 const QUERY_TIMEOUT_IN_MILLISECS = moment.duration(4.5, 'minutes').asMilliseconds();
 const CLIENT_SERVER_DELTA_IN_MILLISECS = moment.duration(0.5, 'minutes').asMilliseconds();
@@ -134,6 +136,7 @@ export class KustoClient implements IKustoClient {
         let axiosResponse;
         try {
             axiosResponse = await axios.post(endpoint, payload, axiosConfig);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             if (error && error.response?.data?.error) {
                 throw error.response.data.error;

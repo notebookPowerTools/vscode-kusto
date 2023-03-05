@@ -12,6 +12,8 @@
 // __webpack_public_path__ = getPublicPath();
 // This must be on top, do not change. Required by webpack.
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import type { ActivationFunction, OutputItem } from 'vscode-notebook-renderer';

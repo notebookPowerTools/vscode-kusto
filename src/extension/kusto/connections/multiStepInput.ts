@@ -1,5 +1,3 @@
-'use strict';
-
 /* eslint-disable , @typescript-eslint/no-explicit-any, @typescript-eslint/no-extraneous-class */
 
 import { Disposable, QuickInput, QuickInputButton, QuickInputButtons, QuickPickItem, window } from 'vscode';
@@ -15,6 +13,7 @@ export class InputFlowAction {
     private constructor() {}
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-constraint
 export type InputStep<T extends any> = (input: MultiStepInput<T>, state: T) => Promise<InputStep<T> | void>;
 
 export interface IQuickPickParameters<T extends QuickPickItem> {
