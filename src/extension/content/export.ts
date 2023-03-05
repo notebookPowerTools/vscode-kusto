@@ -9,7 +9,7 @@ export function registerExportCommand() {
 }
 
 async function exportNotebook(uri?: Uri) {
-    uri = uri || window.activeNotebookEditor?.document.uri;
+    uri = uri || window.activeNotebookEditor?.notebook.uri;
     if (!uri) {
         return;
     }

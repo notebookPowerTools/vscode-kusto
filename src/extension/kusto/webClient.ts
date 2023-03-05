@@ -134,11 +134,11 @@ export class KustoClient implements IKustoClient {
         let axiosResponse;
         try {
             axiosResponse = await axios.post(endpoint, payload, axiosConfig);
-        } catch (error) {
-            if (error.response?.data?.error) {
+        } catch (error: any) {
+            if (error && error.response?.data?.error) {
                 throw error.response.data.error;
             }
-            if (error.response?.data?.Message) {
+            if (error && error.response?.data?.Message) {
                 throw error.response.data.Message;
             }
             throw error;

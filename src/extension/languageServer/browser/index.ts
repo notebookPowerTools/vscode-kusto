@@ -94,8 +94,9 @@ export class BrowserLanguageCapabilityProvider
         DocumentFormattingEditProvider,
         DocumentRangeFormattingEditProvider,
         RenameProvider,
-        FoldingRangeProvider {
-    private readonly protocolConverter = vsclientConverter.createConverter(undefined, undefined);
+        FoldingRangeProvider
+{
+    private readonly protocolConverter = vsclientConverter.createConverter(undefined, true, true);
     private readonly diagnosticCollection = languages.createDiagnosticCollection('kusto');
     private readonly documentDiagnosticProgress = new WeakMap<TextDocument, CancellationTokenSource>();
     constructor() {

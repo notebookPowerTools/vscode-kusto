@@ -3,9 +3,13 @@
     "compilerOptions": {
         "rootDir": ".",
         "outDir": "../../out/extension",
-        "lib": [
-            "ES2019",
-            "dom"
-        ]
-    }
+        "lib": ["ES2019", "dom"]
+    },
+    "include": [
+        "./**/*",
+
+        // // Include all types outside the type roots manually
+        // "./types/slickgrid",
+        "../../vscode.d.ts"
+    ]
 }

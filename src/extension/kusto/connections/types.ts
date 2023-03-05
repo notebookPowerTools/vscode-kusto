@@ -31,10 +31,10 @@ export interface IConnection<T extends IConnectionInfo> {
 }
 
 export interface NewableKustoClient {
-    new (connectionStringBuilder: KustoConnectionStringBuilder): IKustoClient;
+    new (connectionStringBuilder: string | KustoConnectionStringBuilder): IKustoClient;
 }
 export interface IKustoClient {
-    headers: {
+    headers?: {
         [name: string]: string;
     };
     endpoints: {

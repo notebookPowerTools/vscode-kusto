@@ -63,7 +63,6 @@ module.exports = {
             {
                 test: /\.tsx?$/,
                 use: [
-                    { loader: 'cache-loader' },
                     {
                         loader: 'thread-loader',
                         options: {

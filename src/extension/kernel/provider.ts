@@ -8,7 +8,9 @@ import {
     WorkspaceEdit,
     NotebookController,
     ExtensionContext,
-    Disposable
+    Disposable,
+    NotebookEdit,
+    TextDocument
 } from 'vscode';
 import { Client } from '../kusto/client';
 import { getChartType } from '../output/chart';
@@ -30,8 +32,7 @@ export class Kernel extends Disposable {
             'kusto',
             'kusto-notebook',
             'Kusto',
-            this.execute.bind(this),
-            []
+            this.execute.bind(this)
         );
         this.controller.supportedLanguages = ['kusto'];
         this.controller.supportsExecutionOrder = true;
@@ -56,8 +57,9 @@ export class Kernel extends Disposable {
             return;
         }
         const edit = new WorkspaceEdit();
-        edit.replaceNotebookCellMetadata(cell.notebook.uri, cell.index, { statusMessage: '' });
-        const promise = workspace.applyEdit(edit);
+        const cellEdit = NotebookEdit.updateCellMetadata(cell.index, { statusMessage: '' });
+        edit.set(cell.notebook.uri, [cellEdit]);
+        // const promise = workspace.applyEdit(edit);
         task.start(Date.now());
         task.clearOutput();
         let success = false;
@@ -70,16 +72,17 @@ export class Kernel extends Disposable {
                 return;
             }
             success = true;
-            promise.then(() => {
-                const rowCount = results.primaryResults.length ? results.primaryResults[0]._rows.length : undefined;
-                if (rowCount) {
-                    const edit = new WorkspaceEdit();
-                    edit.replaceNotebookCellMetadata(cell.notebook.uri, cell.index, {
-                        statusMessage: `${rowCount} records`
-                    });
-                    workspace.applyEdit(edit);
-                }
-            });
+            // promise.then(() => {
+            //     const rowCount = results.primaryResults.length ? results.primaryResults[0]._rows.length : undefined;
+            //     if (rowCount) {
+            //         const edit = new WorkspaceEdit();
+            //         const nbEdit = NotebookEdit.updateCellMetadata(cell.index, {
+            //             statusMessage: `${rowCount} records`
+            //         });
+            //         edit.set(cell.notebook.uri, [nbEdit]);
+            //         workspace.applyEdit(edit);
+            //     }
+            // });
 
             // Dump the primary results table from the list of tables.
             // We already have that information as a seprate property name `primaryResults`.
@@ -105,8 +108,15 @@ export class Kernel extends Disposable {
                 task.appendOutput(new NotebookCellOutput([NotebookCellOutputItem.error(error)]));
             } else if (ex instanceof Error && ex) {
                 task.appendOutput(new NotebookCellOutput([NotebookCellOutputItem.error(ex)]));
-            } else if (ex && 'message' in ex) {
-                const innerError = 'innererror' in ex && ex.innererror.message ? ` (${ex.innererror.message})` : '';
+            } else if (ex && typeof ex === 'object' && 'message' in ex) {
+                const innerError =
+                    'innererror' in ex &&
+                    typeof ex.innererror === 'object' &&
+                    ex.innererror &&
+                    'message' in ex.innererror &&
+                    ex.innererror.message
+                        ? ` (${ex.innererror.message})`
+                        : '';
                 const message = `${ex.message}${innerError}`;
                 task.appendOutput(new NotebookCellOutput([NotebookCellOutputItem.error({ message, name: '' })]));
             } else {
@@ -122,6 +132,16 @@ export class Kernel extends Disposable {
 export function isJupyterNotebook(document?: NotebookDocument) {
     return document?.notebookType === 'jupyter-notebook';
 }
+export function getJupyterNotebook(textDocument: TextDocument) {
+    return workspace.notebookDocuments.find(
+        (nb) => isJupyterNotebook(nb) && nb.getCells().some((c) => c.document === textDocument)
+    );
+}
 export function isKustoNotebook(document: NotebookDocument) {
     return document.notebookType === 'kusto-notebook';
+}
+export function getKustoNotebook(textDocument: TextDocument) {
+    return workspace.notebookDocuments.find(
+        (nb) => isKustoNotebook(nb) && nb.getCells().some((c) => c.document === textDocument)
+    );
 }
