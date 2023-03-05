@@ -166,7 +166,9 @@ connection.onFoldingRanges(async ({ textDocument }) => {
         return null;
     }
     connection.console.log(`Provide folding ${document.uri.toString()}`);
-    return doFolding(document);
+    const ranges = await doFolding(document);
+    connection.sendNotification('foldingRanges', { uri: document.uri.toString(), foldingRanges: ranges });
+    return ranges;
 });
 
 // Make the text document manager listen on the connection

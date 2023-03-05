@@ -24,11 +24,10 @@ import {
     WorkspaceEdit
 } from 'vscode';
 import { EngineSchema } from '../../kusto/schema';
-import { getNotebookDocument, NotebookCellScheme, registerDisposable } from '../../utils';
+import { isJupyterNotebook, getNotebookDocument, NotebookCellScheme, registerDisposable } from '../../utils';
 import { ILanguageServiceExport, LanguageService } from './kustoLanguageService';
 import * as vsclientConverter from 'vscode-languageclient/lib/common/protocolConverter';
 import { TextDocument as LSTextDocument } from 'vscode-languageserver-textdocument';
-import { isJupyterNotebook } from '../../kernel/provider';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const languageService: ILanguageServiceExport = require('../../../../libs/kusto/languageService/kustoLanguageService');
 

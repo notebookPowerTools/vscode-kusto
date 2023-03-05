@@ -10,7 +10,7 @@ import {
 import { commands, NotebookDocument, Uri, workspace, WorkspaceEdit } from 'vscode';
 import { IConnectionInfo } from './types';
 import { registerDisposable } from '../../utils';
-import { isJupyterNotebook, getJupyterNotebook, isKustoNotebook, getKustoNotebook } from '../../kernel/provider';
+import { isJupyterNotebook, getJupyterNotebook, isKustoNotebook, getKustoNotebook } from '../../utils';
 import { isEqual } from 'lodash';
 import { captureConnectionFromUser } from './management';
 import { getFromCache, updateCache } from '../../cache';

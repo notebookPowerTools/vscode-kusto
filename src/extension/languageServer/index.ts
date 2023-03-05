@@ -1,9 +1,22 @@
 import { isEqual } from 'lodash';
 import * as path from 'path';
-import { env, ExtensionContext, NotebookDocument, TextDocument, UIKind, window, workspace } from 'vscode';
+import {
+    env,
+    Event,
+    EventEmitter,
+    ExtensionContext,
+    FoldingRange,
+    NotebookDocument,
+    TextDocument,
+    UIKind,
+    Uri,
+    window,
+    workspace
+} from 'vscode';
+import * as vsclientConverter from 'vscode-languageclient/lib/common/protocolConverter';
 import { LanguageClientOptions } from 'vscode-languageclient';
 import { LanguageClient, ServerOptions, State, TransportKind } from 'vscode-languageclient/node';
-import { isJupyterNotebook, isKustoNotebook } from '../kernel/provider';
+import { isJupyterNotebook, isKustoNotebook } from '../utils';
 import { fromConnectionInfo } from '../kusto/connections';
 import {
     addDocumentConnectionHandler,
@@ -17,6 +30,28 @@ import { setDocumentEngineSchema } from './browser';
 
 let client: LanguageClient;
 let clientIsReady: boolean | undefined;
+export class FoldingRangesProvider {
+    private ranges = new WeakMap<TextDocument, Promise<FoldingRange[]>>();
+    private _onDidChange = new EventEmitter<TextDocument>();
+    private readonly protocolConverter = vsclientConverter.createConverter(undefined, true, true);
+    public static instance = new FoldingRangesProvider();
+    public get onDidChange(): Event<TextDocument> {
+        return this._onDidChange.event;
+    }
+    public setRanges(uri: Uri, ranges: any[]) {
+        const document = workspace.textDocuments.find((item) => item.uri.toString() === uri.toString());
+        if (!document) {
+            return;
+        }
+        this._onDidChange.fire(document);
+        const foldingRanges = this.protocolConverter.asFoldingRanges(ranges);
+        this.ranges.set(document, foldingRanges);
+    }
+    public async getRanges(document: TextDocument): Promise<FoldingRange[]> {
+        return this.ranges.get(document) || [];
+    }
+}
+
 export async function initialize(context: ExtensionContext) {
     if (env.uiKind === UIKind.Desktop) {
         startLanguageServer(context);
@@ -68,6 +103,18 @@ function startLanguageServer(context: ExtensionContext) {
     registerDisposable(onDidChangeStateHandler);
     // Start the client. This will also launch the server
     client.start();
+    client.onDidChangeState((e) => {
+        if (e.newState !== State.Running) {
+            return;
+        }
+        client.onNotification(
+            'foldingRanges',
+            ({ uri, foldingRanges }: { uri: string; foldingRanges: FoldingRange[] }) => {
+                console.error(`Got notification for folding ranges`, uri, foldingRanges);
+                FoldingRangesProvider.instance.setRanges(Uri.parse(uri), foldingRanges);
+            }
+        );
+    });
 }
 
 const lastSentConnectionForDocument = new WeakMap<NotebookDocument | TextDocument, Partial<IConnectionInfo>>();

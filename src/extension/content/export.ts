@@ -1,6 +1,5 @@
 import { commands, NotebookCell, NotebookCellKind, Uri, window, workspace } from 'vscode';
-import { isKustoNotebook } from '../kernel/provider';
-import { registerDisposable } from '../utils';
+import { isKustoNotebook, registerDisposable } from '../utils';
 import { getConnectionInfoFromDocumentMetadata } from '../kusto/connections/notebookConnection';
 import { updateCache } from '../cache';
 import { ICodeCell, IMarkdownCell, INotebookContent } from './jupyter';
