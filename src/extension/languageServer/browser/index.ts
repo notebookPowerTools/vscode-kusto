@@ -24,11 +24,10 @@ import {
     WorkspaceEdit
 } from 'vscode';
 import { EngineSchema } from '../../kusto/schema';
-import { getNotebookDocument, NotebookCellScheme, registerDisposable } from '../../utils';
+import { isJupyterNotebook, getNotebookDocument, NotebookCellScheme, registerDisposable } from '../../utils';
 import { ILanguageServiceExport, LanguageService } from './kustoLanguageService';
 import * as vsclientConverter from 'vscode-languageclient/lib/common/protocolConverter';
 import { TextDocument as LSTextDocument } from 'vscode-languageserver-textdocument';
-import { isJupyterNotebook } from '../../kernel/provider';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const languageService: ILanguageServiceExport = require('../../../../libs/kusto/languageService/kustoLanguageService');
 
@@ -94,8 +93,9 @@ export class BrowserLanguageCapabilityProvider
         DocumentFormattingEditProvider,
         DocumentRangeFormattingEditProvider,
         RenameProvider,
-        FoldingRangeProvider {
-    private readonly protocolConverter = vsclientConverter.createConverter(undefined, undefined);
+        FoldingRangeProvider
+{
+    private readonly protocolConverter = vsclientConverter.createConverter(undefined, true, true);
     private readonly diagnosticCollection = languages.createDiagnosticCollection('kusto');
     private readonly documentDiagnosticProgress = new WeakMap<TextDocument, CancellationTokenSource>();
     constructor() {
@@ -137,7 +137,7 @@ export class BrowserLanguageCapabilityProvider
     public async provideHover(
         document: TextDocument,
         position: Position,
-        token: CancellationToken
+        _token: CancellationToken
     ): Promise<Hover | undefined> {
         const ls = getLanguageServer(document);
         if (!ls) {
@@ -148,8 +148,8 @@ export class BrowserLanguageCapabilityProvider
     }
     public async provideDocumentFormattingEdits(
         document: TextDocument,
-        options: FormattingOptions,
-        token: CancellationToken
+        _options: FormattingOptions,
+        _token: CancellationToken
     ): Promise<TextEdit[]> {
         const ls = getLanguageServer(document);
         if (!ls || isAJupyterCellThatCanBeIgnored(document)) {
@@ -175,7 +175,7 @@ export class BrowserLanguageCapabilityProvider
         document: TextDocument,
         position: Position,
         newName: string,
-        token: CancellationToken
+        _token: CancellationToken
     ): Promise<WorkspaceEdit | undefined> {
         const ls = getLanguageServer(document);
         if (!ls || isAJupyterCellThatCanBeIgnored(document)) {
@@ -186,8 +186,8 @@ export class BrowserLanguageCapabilityProvider
     }
     public async provideFoldingRanges(
         document: TextDocument,
-        context: FoldingContext,
-        token: CancellationToken
+        _context: FoldingContext,
+        _token: CancellationToken
     ): Promise<FoldingRange[]> {
         const ls = getLanguageServer(document);
         if (!ls) {

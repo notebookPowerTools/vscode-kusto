@@ -54,9 +54,7 @@ export class AzureAuthenticatedConnection extends BaseConnection<AzureAuthentica
 
             if (option) {
                 await env.clipboard.writeText(tokenResponse.userCode);
-                env.openExternal(Uri.parse(tokenResponse.verificationUrl), {
-                    allowContributedOpeners: false
-                });
+                env.openExternal(Uri.parse(tokenResponse.verificationUri));
             }
         });
     }

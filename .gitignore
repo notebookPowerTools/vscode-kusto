@@ -4,3 +4,6 @@ temp
 node_modules
 .vscode-test/
 *.vsix
+vscode.d.ts
+src/**/*.js
+src/**/*.js.map

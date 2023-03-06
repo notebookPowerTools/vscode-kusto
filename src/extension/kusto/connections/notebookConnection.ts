@@ -1,8 +1,16 @@
-import { EventEmitter, NotebookCell, NotebookCellKind, NotebookCellsChangeEvent, TextDocument, window } from 'vscode';
-import { commands, notebooks, NotebookDocument, Uri, workspace, WorkspaceEdit } from 'vscode';
+import {
+    EventEmitter,
+    NotebookCell,
+    NotebookCellKind,
+    NotebookDocumentChangeEvent,
+    NotebookEdit,
+    TextDocument,
+    window
+} from 'vscode';
+import { commands, NotebookDocument, Uri, workspace, WorkspaceEdit } from 'vscode';
 import { IConnectionInfo } from './types';
 import { registerDisposable } from '../../utils';
-import { isJupyterNotebook, isKustoNotebook } from '../../kernel/provider';
+import { isJupyterNotebook, getJupyterNotebook, isKustoNotebook, getKustoNotebook } from '../../utils';
 import { isEqual } from 'lodash';
 import { captureConnectionFromUser } from './management';
 import { getFromCache, updateCache } from '../../cache';
@@ -16,7 +24,7 @@ export function registerNotebookConnection() {
     registerDisposable(onDidChangeConnection);
     registerDisposable(commands.registerCommand('kusto.changeDocumentConnection', changDocumentConnection));
     if (useProposedApi()) {
-        registerDisposable(notebooks.onDidChangeNotebookCells(onDidChangeJupyterNotebookCells));
+        registerDisposable(workspace.onDidChangeNotebookDocument(onDidChangeJupyterNotebookCells));
     }
     registerDisposable(workspace.onDidChangeTextDocument((e) => onDidChangeJupyterNotebookCell(e.document)));
 }
@@ -88,7 +96,7 @@ async function ensureDocumentHasConnectionInfoInternal(
     return info;
 }
 async function changDocumentConnection(uri?: Uri) {
-    uri = uri || window.activeNotebookEditor?.document.uri;
+    uri = uri || window.activeNotebookEditor?.notebook?.uri;
     if (!uri) {
         return;
     }
@@ -105,24 +113,23 @@ async function changDocumentConnection(uri?: Uri) {
         await ensureDocumentHasConnectionInfoInternal(textDocument, true);
     }
 }
-function onDidChangeJupyterNotebookCells(e: NotebookCellsChangeEvent) {
-    if (!isJupyterNotebook(e.document)) {
+function onDidChangeJupyterNotebookCells(e: NotebookDocumentChangeEvent) {
+    if (!isJupyterNotebook(e.notebook)) {
         return;
     }
-    if (e.changes.some((item) => getJupyterCellWithConnectionInfo(item.items))) {
+    if (e.cellChanges.some((item) => getJupyterCellWithConnectionInfo([item.cell]))) {
         // Ok we know the cell containing the connection string changed.
-        getConnectionInfoFromJupyterNotebook(e.document);
-        triggerJupyterConnectionChanged(e.document);
+        getConnectionInfoFromJupyterNotebook(e.notebook);
+        triggerJupyterConnectionChanged(e.notebook);
     }
 }
 function onDidChangeJupyterNotebookCell(textDocument: TextDocument) {
-    if (!textDocument.notebook || !isJupyterNotebook(textDocument.notebook)) {
-        return;
-    }
-    if (textDocumentHasJupyterConnectionInfo(textDocument)) {
+    const notebook = getJupyterNotebook(textDocument);
+
+    if (notebook && textDocumentHasJupyterConnectionInfo(textDocument)) {
         // Ok we know the cell containing the connection string changed.
-        getConnectionInfoFromJupyterNotebook(textDocument.notebook);
-        triggerJupyterConnectionChanged(textDocument.notebook);
+        getConnectionInfoFromJupyterNotebook(notebook);
+        triggerJupyterConnectionChanged(notebook);
     }
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -144,14 +151,17 @@ export function getConnectionInfoFromDocumentMetadata(
     if (connection) {
         return connection;
     }
-    if ('notebook' in document && document.notebook) {
-        document = document.notebook;
-    }
+    let notebook: NotebookDocument | undefined;
     if ('notebookType' in document) {
-        if (isJupyterNotebook(document)) {
-            connection = getConnectionInfoFromJupyterNotebook(document);
+        notebook = document;
+    } else {
+        notebook = getJupyterNotebook(document) || getKustoNotebook(document);
+    }
+    if (notebook) {
+        if (isJupyterNotebook(notebook)) {
+            connection = getConnectionInfoFromJupyterNotebook(notebook);
         } else {
-            connection = getConnectionFromNotebookMetadata(document);
+            connection = getConnectionFromNotebookMetadata(notebook);
         }
     }
     if (connection && !getFromCache(GlobalMementoKeys.lastUsedConnection)) {
@@ -223,7 +233,8 @@ async function updateNotebookConnection(document: NotebookDocument, info: IConne
         const edit = new WorkspaceEdit();
         const metadata = JSON.parse(JSON.stringify(document.metadata)) || {};
         updateMetadataWithConnectionInfo(metadata, info);
-        edit.replaceNotebookMetadata(document.uri, metadata);
+        const nbEdit = NotebookEdit.updateNotebookMetadata(metadata);
+        edit.set(document.uri, [nbEdit]);
         await workspace.applyEdit(edit);
         onDidChangeConnection.fire(document);
     } catch (ex) {

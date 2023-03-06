@@ -1,5 +1,5 @@
-const common = require('./common');
-const FixDefaultImportPlugin = require('webpack-fix-default-import-plugin');
+// const common = require('./common');
+// const FixDefaultImportPlugin = require('webpack-fix-default-import-plugin');
 const path = require('path');
 const constants = require('../constants');
 const configFileName = 'src/client/tsconfig.json';
@@ -63,7 +63,6 @@ module.exports = {
             {
                 test: /\.tsx?$/,
                 use: [
-                    { loader: 'cache-loader' },
                     {
                         loader: 'thread-loader',
                         options: {

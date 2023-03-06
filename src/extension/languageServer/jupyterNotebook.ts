@@ -1,21 +1,23 @@
-import { languages, NotebookCellKind, NotebookDocument, notebooks, TextDocument, workspace } from 'vscode';
+import { languages, NotebookCellKind, NotebookDocument, TextDocument, workspace } from 'vscode';
 import { useProposedApi } from '../constants';
-import { isJupyterNotebook } from '../kernel/provider';
-import { registerDisposable } from '../utils';
+import { registerDisposable, isJupyterNotebook } from '../utils';
 
 export function monitorJupyterCells() {
     registerDisposable(workspace.onDidOpenNotebookDocument(updateKustoCellsOfDocument));
     registerDisposable(workspace.onDidChangeTextDocument((e) => updateKustoCells(e.document)));
     if (useProposedApi()) {
-        registerDisposable(notebooks.onDidChangeNotebookCells((e) => updateKustoCellsOfDocument(e.document)));
+        registerDisposable(workspace.onDidChangeNotebookDocument((e) => updateKustoCellsOfDocument(e.notebook)));
     }
     workspace.notebookDocuments.forEach(updateKustoCellsOfDocument);
 }
 
 async function updateKustoCells(textDocument: TextDocument) {
-    if (!textDocument.notebook || !isJupyterNotebook(textDocument.notebook)) {
+    if (!workspace.notebookDocuments.some((nb) => nb.getCells().some((c) => c.document === textDocument))) {
         return;
     }
+    // if (!textDocument.notebook || !isJupyterNotebook(textDocument.notebook)) {
+    //     return;
+    // }
     if (textDocument.languageId !== 'python') {
         return;
     }

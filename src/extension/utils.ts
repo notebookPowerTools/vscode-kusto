@@ -56,13 +56,13 @@ class DeferredImpl<T> implements Deferred<T> {
         });
     }
     public resolve(_value?: T | PromiseLike<T>) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, prefer-rest-params
         this._resolve.apply(this.scope ? this.scope : this, arguments as any);
         this._resolved = true;
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public reject(_reason?: any) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, prefer-rest-params
         this._reject.apply(this.scope ? this.scope : this, arguments as any);
         this._rejected = true;
     }
@@ -136,4 +136,27 @@ export function getHash(value: string) {
 
 export function getNotebookDocument(document: TextDocument | NotebookDocument): NotebookDocument | undefined {
     return workspace.notebookDocuments.find((item) => item.uri.path === document.uri.path);
+}
+
+export const InteractiveWindowView = 'interactive';
+export const InteractiveWindowScheme = 'vscode-interactive';
+export function isInteractiveWindow(document: NotebookDocument) {
+    return document.notebookType === InteractiveWindowView;
+}
+
+export function isJupyterNotebook(document?: NotebookDocument) {
+    return document?.notebookType === 'jupyter-notebook';
+}
+export function getJupyterNotebook(textDocument: TextDocument) {
+    return workspace.notebookDocuments.find(
+        (nb) => isJupyterNotebook(nb) && nb.getCells().some((c) => c.document === textDocument)
+    );
+}
+export function isKustoNotebook(document: NotebookDocument) {
+    return document.notebookType === 'kusto-notebook' || document.notebookType === 'kusto-notebook-kql';
+}
+export function getKustoNotebook(textDocument: TextDocument) {
+    return workspace.notebookDocuments.find(
+        (nb) => isKustoNotebook(nb) && nb.getCells().some((c) => c.document === textDocument)
+    );
 }

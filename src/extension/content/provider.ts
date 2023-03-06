@@ -8,6 +8,7 @@ import { IConnectionInfo } from '../kusto/connections/types';
 import { fromMetadata } from '../kusto/connections/baseConnection';
 import { AzureAuthenticatedConnection } from '../kusto/connections/azAuth';
 import { getCachedConnections } from '../kusto/connections/storage';
+import { decoder, encoder } from './utils';
 
 type KustoCellMetadata = {
     inputCollapsed?: boolean;
@@ -38,14 +39,12 @@ export type KustoNotebook = {
 };
 
 export class ContentProvider implements vscode.NotebookSerializer {
-    public static decoder = new TextDecoder();
-    public static encoder = new TextEncoder();
     constructor(private readonly _persistOutputs: boolean) {}
     deserializeNotebook(
         content: Uint8Array,
         _token: vscode.CancellationToken
     ): vscode.NotebookData | Thenable<vscode.NotebookData> {
-        const js = ContentProvider.decoder.decode(content);
+        const js = decoder.decode(content);
         try {
             const notebook: KustoNotebook = js.length ? JSON.parse(js) : { cells: [] };
             const cells = notebook.cells.map((item) => {
@@ -109,7 +108,7 @@ export class ContentProvider implements vscode.NotebookSerializer {
                             outputItem.mime.startsWith('application/vnd.kusto.result')
                         );
                         if (kustoOutputItem?.data) {
-                            const data = ContentProvider.decoder.decode(kustoOutputItem.data);
+                            const data = decoder.decode(kustoOutputItem.data);
                             output = output || (JSON.parse(data) as KustoResponseDataSet);
                         }
                     });
@@ -141,7 +140,7 @@ export class ContentProvider implements vscode.NotebookSerializer {
             notebook.metadata = getNotebookMetadata(connection);
         }
 
-        return ContentProvider.encoder.encode(JSON.stringify(notebook, undefined, 4));
+        return encoder.encode(JSON.stringify(notebook, undefined, 4));
     }
 
     public static register() {

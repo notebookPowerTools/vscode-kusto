@@ -1,6 +1,5 @@
 import { commands, NotebookCell, NotebookCellKind, Uri, window, workspace } from 'vscode';
-import { isKustoNotebook } from '../kernel/provider';
-import { registerDisposable } from '../utils';
+import { isKustoNotebook, registerDisposable } from '../utils';
 import { getConnectionInfoFromDocumentMetadata } from '../kusto/connections/notebookConnection';
 import { updateCache } from '../cache';
 import { ICodeCell, IMarkdownCell, INotebookContent } from './jupyter';
@@ -9,7 +8,7 @@ export function registerExportCommand() {
 }
 
 async function exportNotebook(uri?: Uri) {
-    uri = uri || window.activeNotebookEditor?.document.uri;
+    uri = uri || window.activeNotebookEditor?.notebook.uri;
     if (!uri) {
         return;
     }

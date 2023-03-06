@@ -62,6 +62,14 @@ connection.onNotification('setSchema', async (msg: { engineSchema: EngineSchema;
     connection.console.log(`Setting Engine Schema, Done`);
     updateDiagnosticsForDocument(msg.uri);
 });
+connection.onNotification(
+    'getFoldingRanges',
+    async ({ requestId, kql }: { uri: string; requestId: number; kql: string }) => {
+        const document = TextDocument.create(`untitled:${requestId}.kql`, 'kusto', 0, kql);
+        const foldingRanges = await doFolding(document);
+        connection.sendNotification('gotFoldingRanges', { requestId, foldingRanges });
+    }
+);
 connection.onDidChangeConfiguration((_change) => {
     // Formatting support formatting options?
 });
@@ -72,6 +80,9 @@ function isKustoFile(document: TextDocument) {
     return !isNotebookCell(document) && document.languageId === 'kusto';
 }
 function isInteractiveDocument(document: TextDocument) {
+    if (document.uri.toLowerCase().includes('vscode-interactive')) {
+        return true;
+    }
     if (!isNotebookCell(document)) {
         return false;
     }
@@ -163,7 +174,9 @@ connection.onFoldingRanges(async ({ textDocument }) => {
         return null;
     }
     connection.console.log(`Provide folding ${document.uri.toString()}`);
-    return doFolding(document);
+    const ranges = await doFolding(document);
+    connection.sendNotification('foldingRanges', { uri: document.uri.toString(), foldingRanges: ranges });
+    return ranges;
 });
 
 // Make the text document manager listen on the connection

@@ -1,9 +1,22 @@
 import { isEqual } from 'lodash';
 import * as path from 'path';
-import { env, ExtensionContext, NotebookDocument, TextDocument, UIKind, window, workspace } from 'vscode';
+import {
+    env,
+    Event,
+    EventEmitter,
+    ExtensionContext,
+    FoldingRange,
+    NotebookDocument,
+    TextDocument,
+    UIKind,
+    Uri,
+    window,
+    workspace
+} from 'vscode';
+import * as vsclientConverter from 'vscode-languageclient/lib/common/protocolConverter';
 import { LanguageClientOptions } from 'vscode-languageclient';
 import { LanguageClient, ServerOptions, State, TransportKind } from 'vscode-languageclient/node';
-import { isJupyterNotebook, isKustoNotebook } from '../kernel/provider';
+import { createDeferred, Deferred, isJupyterNotebook, isKustoNotebook } from '../utils';
 import { fromConnectionInfo } from '../kusto/connections';
 import {
     addDocumentConnectionHandler,
@@ -16,7 +29,30 @@ import { getNotebookDocument, isNotebookCell, registerDisposable } from '../util
 import { setDocumentEngineSchema } from './browser';
 
 let client: LanguageClient;
+const readyClient = createDeferred<LanguageClient>();
 let clientIsReady: boolean | undefined;
+export class FoldingRangesProvider {
+    private ranges = new WeakMap<TextDocument, Promise<FoldingRange[]>>();
+    private _onDidChange = new EventEmitter<TextDocument>();
+    private readonly protocolConverter = vsclientConverter.createConverter(undefined, true, true);
+    public static instance = new FoldingRangesProvider();
+    public get onDidChange(): Event<TextDocument> {
+        return this._onDidChange.event;
+    }
+    public setRanges(uri: Uri, ranges: any[]) {
+        const document = workspace.textDocuments.find((item) => item.uri.toString() === uri.toString());
+        if (!document) {
+            return;
+        }
+        this._onDidChange.fire(document);
+        const foldingRanges = this.protocolConverter.asFoldingRanges(ranges);
+        this.ranges.set(document, foldingRanges);
+    }
+    public async getRanges(document: TextDocument): Promise<FoldingRange[]> {
+        return this.ranges.get(document) || [];
+    }
+}
+
 export async function initialize(context: ExtensionContext) {
     if (env.uiKind === UIKind.Desktop) {
         startLanguageServer(context);
@@ -68,6 +104,53 @@ function startLanguageServer(context: ExtensionContext) {
     registerDisposable(onDidChangeStateHandler);
     // Start the client. This will also launch the server
     client.start();
+    client.onDidChangeState((e) => {
+        if (e.newState !== State.Running) {
+            return;
+        }
+        hookupFoldingRangesResponses(client);
+        readyClient.resolve(client);
+
+        client.onNotification(
+            'foldingRanges',
+            ({ uri, foldingRanges }: { uri: string; foldingRanges: FoldingRange[] }) => {
+                FoldingRangesProvider.instance.setRanges(Uri.parse(uri), foldingRanges);
+            }
+        );
+    });
+}
+
+const foldingRangesRequests = new Map<number, Deferred<{ startLine: number; endLine: number }[]>>();
+let foldingRangesRequestCount = 0;
+export function getFoldingRanges(kql: string) {
+    return readyClient.promise.then((client) => {
+        const requestId = foldingRangesRequestCount++;
+        client.sendNotification('getFoldingRanges', {
+            requestId,
+            kql
+        });
+        const promise = createDeferred<{ startLine: number; endLine: number }[]>();
+        foldingRangesRequests.set(requestId, promise);
+        return promise.promise;
+    });
+}
+
+function hookupFoldingRangesResponses(client: LanguageClient) {
+    client.onNotification(
+        'gotFoldingRanges',
+        ({
+            requestId,
+            foldingRanges
+        }: {
+            requestId: number;
+            foldingRanges: { startLine: number; endLine: number }[];
+        }) => {
+            const promise = foldingRangesRequests.get(requestId);
+            if (promise) {
+                promise.resolve(foldingRanges);
+            }
+        }
+    );
 }
 
 const lastSentConnectionForDocument = new WeakMap<NotebookDocument | TextDocument, Partial<IConnectionInfo>>();
@@ -129,7 +212,6 @@ function sendSchemaForDocumentsToWebLanguageServer() {
             return;
         }
         sentSchemas.add(message);
-        console.debug(message);
         setDocumentEngineSchema(documentOrNotebook, engineSchema);
     });
     pendingSchemas.clear();
@@ -145,8 +227,6 @@ function sendSchemaForDocumentsToNodeLanguageServer() {
         if (sentSchemas.has(message)) {
             return;
         }
-        console.debug(message);
-        console.debug(message);
         client.sendNotification('setSchema', {
             uri: documentOrNotebook.uri.toString(),
             engineSchema
