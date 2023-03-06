@@ -32,7 +32,7 @@ module.exports = {
         devtoolModuleFilenameTemplate: '../../[resource-path]'
     },
     devtool: 'source-map',
-    externals: ['vscode', 'commonjs', 'fs'], // one of the kusto min.bridge libs uses `fs`, ignoring it seems to work.
+    externals: ['vscode', 'commonjs', 'fs', 'keytar'], // one of the kusto min.bridge libs uses `fs`, ignoring it seems to work.
     plugins: [...common.getDefaultPlugins('browser')],
     module: {
         rules: [

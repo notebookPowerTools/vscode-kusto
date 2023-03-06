@@ -17,7 +17,7 @@ module.exports = {
     },
     mode: 'production',
     devtool: 'source-map',
-    externals: ['commonjs'],
+    externals: ['commonjs', 'keytar'],
     plugins: [...common.getDefaultPlugins('extension')],
     resolve: {
         extensions: ['.ts', '.js']
