@@ -2,9 +2,9 @@
     "name": "kusto",
     "displayName": "Kusto Notebooks",
     "description": "Run Kusto Queries in Notebooks",
-    "version": "0.3.8",
+    "version": "0.4.0",
     "engines": {
-        "vscode": "^1.60.0"
+        "vscode": "^1.76.0"
     },
     "publisher": "donjayamanne",
     "author": {
@@ -46,20 +46,11 @@
         "virtualWorkspaces": true
     },
     "activationEvents": [
-        "onLanguage:kusto",
         "onLanguage:python",
         "onNotebook:kusto-notebook",
         "onNotebook:kusto-notebook-kql",
         "onNotebook:jupyter-notebook",
-        "onLanguage:plaintext",
-        "onView:kustoExplorer",
-        "onCommand:kusto.createNotebook",
-        "onCommand:kusto.executeSelectedQuery",
-        "onCommand:kusto.addConnection",
-        "onCommand:kusto.exportNotebookAsScript",
-        "onCommand:kusto.removeConnection",
-        "onCommand:kusto.refreshNode",
-        "onCommand:kusto.changeDocumentConnection"
+        "onLanguage:plaintext"
     ],
     "main": "./out/extension/index.js",
     "browser": "./out/extension/browser.js",
