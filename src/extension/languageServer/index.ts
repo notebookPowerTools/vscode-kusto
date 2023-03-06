@@ -9,16 +9,13 @@ import {
     NotebookDocument,
     TextDocument,
     UIKind,
-    Uri,
     window,
     workspace
 } from 'vscode';
-import * as vsclientConverter from 'vscode-languageclient/lib/common/protocolConverter';
 import { LanguageClientOptions } from 'vscode-languageclient';
 import { LanguageClient, ServerOptions, State, TransportKind } from 'vscode-languageclient/node';
 import {
     createDeferred,
-    Deferred,
     InteractiveInputScheme,
     InteractiveScheme,
     isJupyterNotebook,
@@ -49,24 +46,33 @@ let client: LanguageClient;
 const readyClient = createDeferred<LanguageClient>();
 let clientIsReady: boolean | undefined;
 export class FoldingRangesProvider {
-    private ranges = new WeakMap<TextDocument, Promise<FoldingRange[]>>();
     private _onDidChange = new EventEmitter<TextDocument>();
-    private readonly protocolConverter = vsclientConverter.createConverter(undefined, true, true);
     public static instance = new FoldingRangesProvider();
     public get onDidChange(): Event<TextDocument> {
         return this._onDidChange.event;
     }
-    public setRanges(uri: Uri, ranges: any[]) {
-        const document = workspace.textDocuments.find((item) => item.uri.toString() === uri.toString());
-        if (!document) {
-            return;
+    public async getRanges(document: TextDocument | string): Promise<FoldingRange[]> {
+        const lines = (typeof document === 'string' ? document : document.getText()).split(/\r?\n/g);
+        const ranges: FoldingRange[] = [];
+        let start: number | undefined;
+        for (let index = 0; index < lines.length; index++) {
+            const line = lines[index];
+            if (line.trim().length === 0) {
+                if (typeof start !== 'number') {
+                    continue;
+                }
+                ranges.push(new FoldingRange(start, index - 1));
+                start = undefined;
+                continue;
+            }
+            if (typeof start !== 'number') {
+                start = index;
+            }
+            if (index === lines.length - 1) {
+                ranges.push(new FoldingRange(start, index));
+            }
         }
-        this._onDidChange.fire(document);
-        const foldingRanges = this.protocolConverter.asFoldingRanges(ranges);
-        this.ranges.set(document, foldingRanges);
-    }
-    public async getRanges(document: TextDocument): Promise<FoldingRange[]> {
-        return this.ranges.get(document) || [];
+        return ranges;
     }
 }
 
@@ -126,49 +132,8 @@ function startLanguageServer(context: ExtensionContext) {
         if (e.newState !== State.Running) {
             return;
         }
-        hookupFoldingRangesResponses(client);
         readyClient.resolve(client);
-
-        client.onNotification(
-            'foldingRanges',
-            ({ uri, foldingRanges }: { uri: string; foldingRanges: FoldingRange[] }) => {
-                FoldingRangesProvider.instance.setRanges(Uri.parse(uri), foldingRanges);
-            }
-        );
     });
-}
-
-const foldingRangesRequests = new Map<number, Deferred<{ startLine: number; endLine: number }[]>>();
-let foldingRangesRequestCount = 0;
-export function getFoldingRanges(kql: string) {
-    return readyClient.promise.then((client) => {
-        const requestId = foldingRangesRequestCount++;
-        client.sendNotification('getFoldingRanges', {
-            requestId,
-            kql
-        });
-        const promise = createDeferred<{ startLine: number; endLine: number }[]>();
-        foldingRangesRequests.set(requestId, promise);
-        return promise.promise;
-    });
-}
-
-function hookupFoldingRangesResponses(client: LanguageClient) {
-    client.onNotification(
-        'gotFoldingRanges',
-        ({
-            requestId,
-            foldingRanges
-        }: {
-            requestId: number;
-            foldingRanges: { startLine: number; endLine: number }[];
-        }) => {
-            const promise = foldingRangesRequests.get(requestId);
-            if (promise) {
-                promise.resolve(foldingRanges);
-            }
-        }
-    );
 }
 
 const lastSentConnectionForDocument = new WeakMap<NotebookDocument | TextDocument, Partial<IConnectionInfo>>();

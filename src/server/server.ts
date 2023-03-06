@@ -62,14 +62,6 @@ connection.onNotification('setSchema', async (msg: { engineSchema: EngineSchema;
     connection.console.log(`Setting Engine Schema, Done`);
     updateDiagnosticsForDocument(msg.uri);
 });
-connection.onNotification(
-    'getFoldingRanges',
-    async ({ requestId, kql }: { uri: string; requestId: number; kql: string }) => {
-        const document = TextDocument.create(`untitled:${requestId}.kql`, 'kusto', 0, kql);
-        const foldingRanges = await doFolding(document);
-        connection.sendNotification('gotFoldingRanges', { requestId, foldingRanges });
-    }
-);
 connection.onDidChangeConfiguration((_change) => {
     // Formatting support formatting options?
 });
@@ -174,9 +166,7 @@ connection.onFoldingRanges(async ({ textDocument }) => {
         return null;
     }
     connection.console.log(`Provide folding ${document.uri.toString()}`);
-    const ranges = await doFolding(document);
-    connection.sendNotification('foldingRanges', { uri: document.uri.toString(), foldingRanges: ranges });
-    return ranges;
+    return doFolding(document);
 });
 
 // Make the text document manager listen on the connection
