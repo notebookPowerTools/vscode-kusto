@@ -1,8 +1,12 @@
-# Kusto in Notebooks
+# Kusto in Notebooks & Interactive Window
 
-A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marketplace.visualstudio.com/items?itemName=donjayamanne.kusto) that provides the ability to run Kusto queries in Notebooks.
+A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marketplace.visualstudio.com/items?itemName=donjayamanne.kusto) that provides the ability to run Kusto queries in Notebooks as well as plain text files.
 
-<img src=https://raw.githubusercontent.com/DonJayamanne/vscode-kusto/main/images/main.gif>
+<img src=https://raw.githubusercontent.com/notebookPowerTools/vscode-kusto/main/images/interactive_window.gif>
+
+<img src=https://raw.githubusercontent.com/notebookPowerTools/vscode-kusto/main/images/notebook.gif>
+
+<img src=https://raw.githubusercontent.com/notebookPowerTools/vscode-kusto/main/images/clusters.png>
 
 # Features
 * Run Kusto Queries
@@ -12,8 +16,12 @@ A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marke
 * Code refactoring
 * Code formatting
 * Kusto panel with access to Clusters, Databases, Tables, etc
+* Run Kusto queries in Plain text files, Notebooks or in an Interactive Window
 
 # Getting Started
+* Open a `*.kql|*.csl` file and start typing to get code completion.
+* Open a `*.kql|*.csl` file and click on the `Run Query` code lense
+* Open a `*.kql|*.csl` file as a notebook
 * Create a file with extension `*.knb` (or use the command `Create Kusto Notebook`)
 * Use the command `Configure Kusto Connection` to configure the Kusto connection.
 
@@ -29,7 +37,6 @@ A [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marke
 
 # Roadmap
 * Support for more charts
-* Support for plain text files (*.csl/*.kql)
 * & more...
 
 # Thanks to the contributors
