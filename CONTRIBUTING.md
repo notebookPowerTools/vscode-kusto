@@ -5,8 +5,8 @@
 
 ### Prerequisites
 
-1. [Node.js](https://nodejs.org/) 12.15
-1. npm 6.13.4
+1. [Node.js](https://nodejs.org/) 16.14.2
+1. npm 8.15.2
 1. Windows, macOS, or Linux
 1. [Visual Studio Code](https://code.visualstudio.com/)
 1. The following VS Code extensions:
@@ -17,12 +17,10 @@
 ### Setup
 
 ```shell
-git clone https://github.com/Microsoft/vscode-notebook-renderers
-cd vscode-notebook-renderers
+git clone https://github.com/notebookPowerTools/vscode-kusto
+cd vscode-kusto
 npm ci
 ```
-
-If you see warnings that `The engine "vscode" appears to be invalid.`, you can ignore these.
 
 ### Incremental Build
 
