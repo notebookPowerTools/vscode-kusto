@@ -47,7 +47,8 @@ function renderOutput(value: OutputItem, element: HTMLElement) {
         `;
 
         element.style.backgroundColor = 'white';
-        renderChart(value.json(), element);
+        const ele = element.appendChild(document.createElement('div'));
+        renderChart(value.json(), ele);
         element.appendChild(style);
     } catch (ex) {
         console.error(`Failed to render output ${value.text()}`, ex);
@@ -122,6 +123,9 @@ function renderChart(results: KustoResponseDataSet, ele: HTMLElement) {
         title: chartType.title,
         autosize: true
     };
+    // Ensures the chart is resized when the window is resized.
+    window.addEventListener('resize', () => Plotly.Plots.resize(ele));
+
     if (chartType.type === 'pie') {
         const clonedColumns = results.primaryResults[0].columns.slice();
         // Last column is assumed to be the one with the values (do a best effort to find the one with the `long` value).
