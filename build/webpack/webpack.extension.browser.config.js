@@ -18,7 +18,8 @@ module.exports = {
             crypto: require.resolve('crypto-browserify'),
             path: require.resolve('path-browserify'),
             util: require.resolve('util/'),
-            buffer: require.resolve('buffer/')
+            buffer: require.resolve('buffer/'),
+            os: require.resolve('os-browserify')
         }
     },
     optimization: {
