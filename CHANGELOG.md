@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 (7 March 2023)
+
+### Enhancements
+
+1. Open *.kql & *.csl files in a Notebook editor.
+2. Run queries in *.kql & *.csl files against an Interactive Window.
+
 ## 0.3.8 (12 Sept 2021)
 
 ### Enhancements
