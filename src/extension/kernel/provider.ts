@@ -35,10 +35,11 @@ export class Kernel extends Disposable {
             notebookType === 'kusto-notebook' ? 'kusto' : 'kusto-kql',
             notebookType
         );
-        this.interactiveController = this.createController(
-            notebookType === 'kusto-notebook' ? 'kustoInteractive' : 'kustoInteractive-kql',
-            InteractiveWindowView
-        );
+        if (notebookType === 'kusto-notebook') {
+            this.interactiveController = this.createController('kustoInteractive', InteractiveWindowView);
+        } else {
+            this.interactiveController = Kernel.instance.interactiveController;
+        }
         if (notebookType === 'kusto-notebook') {
             Kernel.instance = this;
         }

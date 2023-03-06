@@ -9,12 +9,14 @@ import {
     TextDocument,
     Uri,
     ViewColumn,
+    window,
     workspace,
     WorkspaceEdit
 } from 'vscode';
 import { commands } from 'vscode';
 import { registerDisposable } from '../utils';
 import { Kernel } from '../kernel/provider';
+import { FoldingRangesProvider } from '../languageServer';
 
 export function registerInteractiveExperience() {
     registerDisposable(commands.registerCommand('kusto.executeSelectedQuery', executeSelectedQuery));
@@ -22,11 +24,44 @@ export function registerInteractiveExperience() {
 
 type INativeInteractiveWindow = { notebookUri: Uri; inputUri: Uri; notebookEditor: NotebookEditor };
 const documentInteractiveDocuments = new WeakMap<TextDocument, Promise<NotebookDocument | undefined>>();
+
 async function executeSelectedQuery(document: TextDocument, start: number, end: number) {
+    if (!document) {
+        if (
+            !window.activeTextEditor ||
+            !window.activeTextEditor.selection ||
+            window.activeTextEditor.selections.length > 1 ||
+            window.activeTextEditor.document.languageId.toLocaleLowerCase() !== 'kusto'
+        ) {
+            return;
+        }
+        const selection = window.activeTextEditor.selection;
+        document = window.activeTextEditor.document;
+        const ranges = await FoldingRangesProvider.instance.getRanges(document);
+        const range = ranges.find((r) => r.start <= selection.start.line && r.end >= selection.end.line);
+        if (!range) {
+            return;
+        }
+
+        start = range.start;
+        for (start = range.start; start <= range.end; start++) {
+            const line = document.lineAt(start).text;
+            if (line.trim().startsWith('//')) {
+                continue;
+            } else {
+                break;
+            }
+        }
+        end = range.end;
+    }
     if (!documentInteractiveDocuments.has(document)) {
         documentInteractiveDocuments.set(document, getNotebookDocument());
     }
-    const notebook = await documentInteractiveDocuments.get(document);
+    let notebook = await documentInteractiveDocuments.get(document);
+    if (notebook?.isClosed) {
+        documentInteractiveDocuments.set(document, getNotebookDocument());
+    }
+    notebook = await documentInteractiveDocuments.get(document);
     if (!notebook) {
         return;
     }
@@ -37,45 +72,15 @@ async function executeSelectedQuery(document: TextDocument, start: number, end: 
 }
 
 async function getNotebookDocument() {
-    // eslint-disable-next-line prefer-const
-    let notebookUri: Uri | undefined;
-    let isSelected = false;
-    const selected = new Promise<void>((resolve) => {
-        const disposable = Kernel.instance.interactiveController.onDidChangeSelectedNotebooks(
-            ({ notebook, selected }) => {
-                if (!selected) {
-                    return;
-                }
-                if (!notebookUri) {
-                    notebookUri = notebook.uri;
-                    isSelected = true;
-                    return resolve();
-                }
-                if (notebook.uri.toString() !== notebookUri.toString()) {
-                    return;
-                }
-                isSelected = true;
-                resolve();
-            }
-        );
-        registerDisposable(disposable);
-    });
     const info = (await commands.executeCommand(
         'interactive.open',
-        // ViewColumn.Beside,
         { viewColumn: ViewColumn.Beside, preserveFocus: true },
         undefined,
         'kustoInteractive',
         'Kusto Interactive Window'
     )) as INativeInteractiveWindow;
-    if (!isSelected) {
-        notebookUri = info.notebookUri;
-        await Promise.all([selected, commands.executeCommand('notebook.selectKernel')]);
-    }
 
     return info.notebookEditor.notebook;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    // return workspace.notebookDocuments.find((item) => item.uri.toString() === notebookUri!.toString());
 }
 async function createCell(notebook: NotebookDocument, document: TextDocument, start: number, end: number) {
     const text = document.getText(new Range(document.lineAt(start).range.start, document.lineAt(end).range.end));
