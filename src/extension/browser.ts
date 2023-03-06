@@ -17,6 +17,7 @@ import { BrowserLanguageCapabilityProvider } from './languageServer/browser';
 import { initializeCache } from './cache';
 import { registerConfigurationListener } from './configuration';
 export async function activate(context: ExtensionContext) {
+    initializeCache(context.globalState);
     initializeConstants(false); // In browser context dont use proposed API, try to always use stable stuff...
     initializeLanguageService(context);
     initializeConnectionStorage(context);
@@ -28,7 +29,6 @@ export async function activate(context: ExtensionContext) {
     );
     AzureAuthenticatedConnection.registerKustoClient(KustoClient);
     AppInsightsConnection.registerKustoClient(KustoClient);
-    initializeCache(context.globalState);
     KernelProvider.register(context);
     ContentProvider.register();
     ClusterTreeView.register();

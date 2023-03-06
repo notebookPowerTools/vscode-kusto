@@ -24,6 +24,7 @@ import { KqlContentProvider } from './content/kqlProvider';
 let client: LanguageClient;
 
 export async function activate(context: ExtensionContext) {
+    initializeCache(context.globalState);
     initializeConstants(context.extension.packageJSON.enableProposedApi); // In browser context dont use proposed API, try to always use stable stuff...
     initializeLanguageService(context);
     initializeConnectionStorage(context);
@@ -35,7 +36,6 @@ export async function activate(context: ExtensionContext) {
     );
     AzureAuthenticatedConnection.registerKustoClient(KustoClient);
     AppInsightsConnection.registerKustoClient(KustoClient);
-    initializeCache(context.globalState);
     KernelProvider.register(context);
     StatusBarProvider.register(context);
     registerDisposableRegistry(context);

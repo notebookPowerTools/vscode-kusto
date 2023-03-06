@@ -163,6 +163,8 @@ export function getConnectionInfoFromDocumentMetadata(
         } else {
             connection = getConnectionFromNotebookMetadata(notebook);
         }
+    } else {
+        connection = getFromCache<IConnectionInfo>(document.uri.toString().toLowerCase());
     }
     if (connection && !getFromCache(GlobalMementoKeys.lastUsedConnection)) {
         // If we have a preferred connection, and user hasn't ever selected a connection (before),
