@@ -17,6 +17,7 @@ import { BrowserLanguageCapabilityProvider } from './languageServer/browser';
 import { initializeCache } from './cache';
 import { registerConfigurationListener } from './configuration';
 import { KqlContentProvider } from './content/kqlProvider';
+import { CellCodeLensProvider } from './interactive/cells';
 export async function activate(context: ExtensionContext) {
     initializeCache(context.globalState);
     initializeConstants(false); // In browser context dont use proposed API, try to always use stable stuff...
@@ -39,4 +40,5 @@ export async function activate(context: ExtensionContext) {
     // monitorJupyterCells();
     registerExportCommand();
     BrowserLanguageCapabilityProvider.register();
+    CellCodeLensProvider.register();
 }
