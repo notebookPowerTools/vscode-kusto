@@ -77,7 +77,7 @@ function isNotebookCell(document: TextDocument) {
     return URI.parse(document.uri.toString()).scheme === 'vscode-notebook-cell';
 }
 function isKustoFile(document: TextDocument) {
-    return !isNotebookCell(document) && document.languageId === 'kusto';
+    return !isNotebookCell(document) && document.languageId.toLowerCase() === 'kusto';
 }
 function isInteractiveDocument(document: TextDocument) {
     if (document.uri.toLowerCase().includes('vscode-interactive')) {

@@ -118,14 +118,16 @@ export function createPromiseFromToken<T>(
     });
 }
 export const NotebookCellScheme = 'vscode-notebook-cell';
+export const InteractiveScheme = 'vscode-interactive';
+export const InteractiveInputScheme = 'vscode-interactive-input';
 export function isUntitledFile(file?: Uri) {
     return file?.scheme === 'untitled';
 }
 export function isKustoFile(document: TextDocument) {
-    return document.languageId === 'kusto';
+    return document.languageId.toLowerCase() === 'kusto';
 }
 export function isKustoCell(document: TextDocument) {
-    return document.languageId === 'kusto' && document.uri.scheme === NotebookCellScheme;
+    return document.languageId.toLowerCase() === 'kusto' && document.uri.scheme === NotebookCellScheme;
 }
 export function isNotebookCell(document: NotebookDocument | TextDocument) {
     return document.uri.scheme === NotebookCellScheme;
