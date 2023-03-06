@@ -16,7 +16,7 @@ import {
 import * as vsclientConverter from 'vscode-languageclient/lib/common/protocolConverter';
 import { LanguageClientOptions } from 'vscode-languageclient';
 import { LanguageClient, ServerOptions, State, TransportKind } from 'vscode-languageclient/node';
-import { isJupyterNotebook, isKustoNotebook } from '../utils';
+import { createDeferred, Deferred, isJupyterNotebook, isKustoNotebook } from '../utils';
 import { fromConnectionInfo } from '../kusto/connections';
 import {
     addDocumentConnectionHandler,
@@ -29,6 +29,7 @@ import { getNotebookDocument, isNotebookCell, registerDisposable } from '../util
 import { setDocumentEngineSchema } from './browser';
 
 let client: LanguageClient;
+const readyClient = createDeferred<LanguageClient>();
 let clientIsReady: boolean | undefined;
 export class FoldingRangesProvider {
     private ranges = new WeakMap<TextDocument, Promise<FoldingRange[]>>();
@@ -107,14 +108,49 @@ function startLanguageServer(context: ExtensionContext) {
         if (e.newState !== State.Running) {
             return;
         }
+        hookupFoldingRangesResponses(client);
+        readyClient.resolve(client);
+
         client.onNotification(
             'foldingRanges',
             ({ uri, foldingRanges }: { uri: string; foldingRanges: FoldingRange[] }) => {
-                console.error(`Got notification for folding ranges`, uri, foldingRanges);
                 FoldingRangesProvider.instance.setRanges(Uri.parse(uri), foldingRanges);
             }
         );
     });
+}
+
+const foldingRangesRequests = new Map<number, Deferred<{ startLine: number; endLine: number }[]>>();
+let foldingRangesRequestCount = 0;
+export function getFoldingRanges(kql: string) {
+    return readyClient.promise.then((client) => {
+        const requestId = foldingRangesRequestCount++;
+        client.sendNotification('getFoldingRanges', {
+            requestId,
+            kql
+        });
+        const promise = createDeferred<{ startLine: number; endLine: number }[]>();
+        foldingRangesRequests.set(requestId, promise);
+        return promise.promise;
+    });
+}
+
+function hookupFoldingRangesResponses(client: LanguageClient) {
+    client.onNotification(
+        'gotFoldingRanges',
+        ({
+            requestId,
+            foldingRanges
+        }: {
+            requestId: number;
+            foldingRanges: { startLine: number; endLine: number }[];
+        }) => {
+            const promise = foldingRangesRequests.get(requestId);
+            if (promise) {
+                promise.resolve(foldingRanges);
+            }
+        }
+    );
 }
 
 const lastSentConnectionForDocument = new WeakMap<NotebookDocument | TextDocument, Partial<IConnectionInfo>>();
@@ -176,7 +212,6 @@ function sendSchemaForDocumentsToWebLanguageServer() {
             return;
         }
         sentSchemas.add(message);
-        console.debug(message);
         setDocumentEngineSchema(documentOrNotebook, engineSchema);
     });
     pendingSchemas.clear();
@@ -192,8 +227,6 @@ function sendSchemaForDocumentsToNodeLanguageServer() {
         if (sentSchemas.has(message)) {
             return;
         }
-        console.debug(message);
-        console.debug(message);
         client.sendNotification('setSchema', {
             uri: documentOrNotebook.uri.toString(),
             engineSchema

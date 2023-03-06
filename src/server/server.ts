@@ -62,6 +62,14 @@ connection.onNotification('setSchema', async (msg: { engineSchema: EngineSchema;
     connection.console.log(`Setting Engine Schema, Done`);
     updateDiagnosticsForDocument(msg.uri);
 });
+connection.onNotification(
+    'getFoldingRanges',
+    async ({ requestId, kql }: { uri: string; requestId: number; kql: string }) => {
+        const document = TextDocument.create(`untitled:${requestId}.kql`, 'kusto', 0, kql);
+        const foldingRanges = await doFolding(document);
+        connection.sendNotification('gotFoldingRanges', { requestId, foldingRanges });
+    }
+);
 connection.onDidChangeConfiguration((_change) => {
     // Formatting support formatting options?
 });

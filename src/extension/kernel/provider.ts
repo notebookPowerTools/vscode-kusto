@@ -17,7 +17,8 @@ import { InteractiveWindowView, createPromiseFromToken } from '../utils';
 
 export class KernelProvider {
     public static register(context: ExtensionContext) {
-        context.subscriptions.push(new Kernel());
+        context.subscriptions.push(new Kernel('kusto-notebook'));
+        context.subscriptions.push(new Kernel('kusto-notebook-kql'));
     }
 }
 
@@ -26,13 +27,21 @@ export class Kernel extends Disposable {
     public readonly interactiveController: NotebookController;
     public static instance: Kernel;
 
-    constructor() {
+    constructor(notebookType: 'kusto-notebook' | 'kusto-notebook-kql') {
         super(() => {
             this.dispose();
         });
-        this.notebookController = this.createController('kusto', 'kusto-notebook');
-        this.interactiveController = this.createController('kustoInteractive', InteractiveWindowView);
-        Kernel.instance = this;
+        this.notebookController = this.createController(
+            notebookType === 'kusto-notebook' ? 'kusto' : 'kusto-kql',
+            notebookType
+        );
+        this.interactiveController = this.createController(
+            notebookType === 'kusto-notebook' ? 'kustoInteractive' : 'kustoInteractive-kql',
+            InteractiveWindowView
+        );
+        if (notebookType === 'kusto-notebook') {
+            Kernel.instance = this;
+        }
     }
 
     dispose() {

@@ -2,6 +2,7 @@ import { CancellationTokenSource, NotebookDocument, window, workspace } from 'vs
 import { AzureAuthenticatedConnection } from '../kusto/connections/azAuth';
 import { IConnectionInfo } from '../kusto/connections/types';
 import { ContentProvider, KustoNotebook } from './provider';
+import { encoder } from './utils';
 
 type KustoNotebookConnectionMetadata =
     | {
@@ -50,7 +51,7 @@ export async function createUntitledNotebook(connection?: IConnectionInfo, cellT
     };
     // await commands.executeCommand('vscode.openWith', uri, 'kusto-notebook');
     const data = await new ContentProvider(false).deserializeNotebook(
-        ContentProvider.encoder.encode(JSON.stringify(contents)),
+        encoder.encode(JSON.stringify(contents)),
         new CancellationTokenSource().token
     );
     const doc = await workspace.openNotebookDocument('kusto-notebook', data);

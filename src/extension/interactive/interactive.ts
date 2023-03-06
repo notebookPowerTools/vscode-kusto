@@ -14,7 +14,7 @@ import {
 } from 'vscode';
 import { commands } from 'vscode';
 import { registerDisposable } from '../utils';
-import { Kernel } from './provider';
+import { Kernel } from '../kernel/provider';
 
 export function registerInteractiveExperience() {
     registerDisposable(commands.registerCommand('kusto.executeSelectedQuery', executeSelectedQuery));

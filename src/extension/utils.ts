@@ -153,7 +153,7 @@ export function getJupyterNotebook(textDocument: TextDocument) {
     );
 }
 export function isKustoNotebook(document: NotebookDocument) {
-    return document.notebookType === 'kusto-notebook';
+    return document.notebookType === 'kusto-notebook' || document.notebookType === 'kusto-notebook-kql';
 }
 export function getKustoNotebook(textDocument: TextDocument) {
     return workspace.notebookDocuments.find(

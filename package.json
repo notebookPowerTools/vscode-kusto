@@ -49,6 +49,7 @@
         "onLanguage:kusto",
         "onLanguage:python",
         "onNotebook:kusto-notebook",
+        "onNotebook:kusto-notebook-kql",
         "onNotebook:jupyter-notebook",
         "onLanguage:plaintext",
         "onView:kustoExplorer",
@@ -169,7 +170,7 @@
             "commandPalette": [
                 {
                     "command": "kusto.changeDocumentConnection",
-                    "when": "notebookType == kusto-notebook || notebookType == jupyter-notebook"
+                    "when": "notebookType == kusto-notebook || notebookType == kusto-notebook-kql || notebookType == jupyter-notebook"
                 },
                 {
                     "command": "kusto.exportNotebookAsScript",
@@ -210,7 +211,7 @@
             "editor/title": [
                 {
                     "command": "kusto.changeDocumentConnection",
-                    "when": "notebookType == kusto-notebook || notebookType == jupyter-notebook",
+                    "when": "notebookType == kusto-notebook || notebookType == kusto-notebook-kql || notebookType == jupyter-notebook",
                     "group": "navigation@1"
                 },
                 {
@@ -271,6 +272,16 @@
                 "selector": [
                     {
                         "filenamePattern": "*.knb"
+                    }
+                ]
+            },
+            {
+                "type": "kusto-notebook-kql",
+                "displayName": "Kusto Notebook",
+                "priority": "option",
+                "selector": [
+                    {
+                        "filenamePattern": "*.kql"
                     }
                 ]
             }

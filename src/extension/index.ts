@@ -11,7 +11,7 @@ import { initialize as initializeLanguageService } from './languageServer';
 import { monitorJupyterCells } from './languageServer/jupyterNotebook';
 import { registerConfigurationListener } from './configuration';
 import { initializeConnectionStorage } from './kusto/connections/storage';
-import { registerInteractiveExperience } from './kernel/interactive';
+import { registerInteractiveExperience } from './interactive/interactive';
 import { registerExportCommand } from './content/export';
 import { StatusBarProvider } from './kernel/statusbar';
 import { AzureAuthenticatedConnection } from './kusto/connections/azAuth';
@@ -19,6 +19,7 @@ import KustoClient from 'azure-kusto-data/source/client';
 import { registerConnection } from './kusto/connections/baseConnection';
 import { AppInsightsConnection } from './kusto/connections/appInsights';
 import { CellCodeLensProvider } from './interactive/cells';
+import { KqlContentProvider } from './content/kqlProvider';
 
 let client: LanguageClient;
 
@@ -39,6 +40,7 @@ export async function activate(context: ExtensionContext) {
     StatusBarProvider.register(context);
     registerDisposableRegistry(context);
     ContentProvider.register();
+    KqlContentProvider.register();
     ClusterTreeView.register();
     registerNotebookConnection();
     registerConfigurationListener(context);
