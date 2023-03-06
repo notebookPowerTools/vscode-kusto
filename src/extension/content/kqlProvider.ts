@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { NotebookCellData, NotebookCellKind, NotebookData, workspace } from 'vscode';
 import { registerDisposable } from '../utils';
-import { getFoldingRanges } from '../languageServer';
 import { decoder, encoder } from './utils';
 import { EOL } from 'os';
+import { FoldingRangesProvider } from '../languageServer';
 
 type KustoCell = {
     source: string[];
@@ -28,14 +28,14 @@ export class KqlContentProvider implements vscode.NotebookSerializer {
     async deserializeNotebook(content: Uint8Array, _token: vscode.CancellationToken): Promise<vscode.NotebookData> {
         const kql = decoder.decode(content);
         try {
-            const ranges = await getFoldingRanges(kql);
+            const ranges = await FoldingRangesProvider.instance.getRanges(kql);
             const lines = kql.split(/\r?\n/);
 
             const cells: KustoCell[] = [];
             let currentCellStartLine = 0;
             for (const range of ranges) {
                 const previousLines =
-                    range.startLine === currentCellStartLine ? [] : lines.slice(currentCellStartLine, range.startLine);
+                    range.start === currentCellStartLine ? [] : lines.slice(currentCellStartLine, range.start);
 
                 // If this is the first cell, and we have some leading white space, make it part of that cell.
                 if (cells.length > 0 && previousLines.length) {
@@ -43,9 +43,9 @@ export class KqlContentProvider implements vscode.NotebookSerializer {
                     cells[cells.length - 1].source.push(...previousLines);
                 }
 
-                currentCellStartLine = range.endLine + 1;
+                currentCellStartLine = range.end + 1;
 
-                const source = lines.slice(range.startLine, range.endLine + 1);
+                const source = lines.slice(range.start, range.end + 1);
                 const kind = source.every((line) => line.trim().length === 0 || line.trim().startsWith('//'))
                     ? 'markdown'
                     : 'code';
