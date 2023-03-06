@@ -38,23 +38,24 @@ export class KqlContentProvider implements vscode.NotebookSerializer {
                     range.startLine === currentCellStartLine ? [] : lines.slice(currentCellStartLine, range.startLine);
 
                 // If this is the first cell, and we have some leading white space, make it part of that cell.
-                if (cells.length > 0) {
+                if (cells.length > 0 && previousLines.length) {
                     // All of the leading white space will be treated as white space but part of the previous cell.
                     cells[cells.length - 1].source.push(...previousLines);
                 }
 
-                if (cells.length && range === ranges[ranges.length - 1]) {
-                    // Last cell.
-                    // Keep track of the trailing white space.
-                    cells[cells.length - 1].source.push(...lines.slice(range.endLine + 1));
-                } else {
-                    currentCellStartLine = range.endLine + 1;
-                }
+                currentCellStartLine = range.endLine + 1;
 
                 const source = lines.slice(range.startLine, range.endLine + 1);
                 const kind = source.every((line) => line.trim().length === 0 || line.trim().startsWith('//'))
                     ? 'markdown'
                     : 'code';
+
+                // We always have an empty line at the end of each cell.
+                // No point adding this empty line to the cell.
+                if (source.length > 1 && source[source.length - 1].trim().length === 0) {
+                    source.pop();
+                }
+
                 if (kind === 'markdown') {
                     // Strip all of the leading // from the markdown lines and add empty space ad the end of each line.
                     source.forEach((line, index) => {
