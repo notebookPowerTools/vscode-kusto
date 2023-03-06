@@ -16,6 +16,7 @@ import { registerExportCommand } from './content/export';
 import { BrowserLanguageCapabilityProvider } from './languageServer/browser';
 import { initializeCache } from './cache';
 import { registerConfigurationListener } from './configuration';
+import { KqlContentProvider } from './content/kqlProvider';
 export async function activate(context: ExtensionContext) {
     initializeCache(context.globalState);
     initializeConstants(false); // In browser context dont use proposed API, try to always use stable stuff...
@@ -31,6 +32,7 @@ export async function activate(context: ExtensionContext) {
     AppInsightsConnection.registerKustoClient(KustoClient);
     KernelProvider.register(context);
     ContentProvider.register();
+    KqlContentProvider.register();
     ClusterTreeView.register();
     registerNotebookConnection();
     registerConfigurationListener(context);
