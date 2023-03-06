@@ -16,7 +16,15 @@ import {
 import * as vsclientConverter from 'vscode-languageclient/lib/common/protocolConverter';
 import { LanguageClientOptions } from 'vscode-languageclient';
 import { LanguageClient, ServerOptions, State, TransportKind } from 'vscode-languageclient/node';
-import { createDeferred, Deferred, isJupyterNotebook, isKustoNotebook } from '../utils';
+import {
+    createDeferred,
+    Deferred,
+    InteractiveInputScheme,
+    InteractiveScheme,
+    isJupyterNotebook,
+    isKustoNotebook,
+    NotebookCellScheme
+} from '../utils';
 import { fromConnectionInfo } from '../kusto/connections';
 import {
     addDocumentConnectionHandler,
@@ -27,6 +35,15 @@ import { IConnectionInfo } from '../kusto/connections/types';
 import { EngineSchema } from '../kusto/schema';
 import { getNotebookDocument, isNotebookCell, registerDisposable } from '../utils';
 import { setDocumentEngineSchema } from './browser';
+
+const selector = [
+    { language: 'kusto' },
+    { language: 'kusto', scheme: 'file' },
+    { language: 'kusto', scheme: 'untitled' },
+    { language: 'kusto', scheme: NotebookCellScheme },
+    { language: 'kusto', scheme: InteractiveScheme },
+    { language: 'kusto', scheme: InteractiveInputScheme }
+];
 
 let client: LanguageClient;
 const readyClient = createDeferred<LanguageClient>();
@@ -87,7 +104,7 @@ function startLanguageServer(context: ExtensionContext) {
     // Options to control the language client
     const clientOptions: LanguageClientOptions = {
         // Register the server for plain text documents
-        documentSelector: [{ language: 'kusto' }],
+        documentSelector: selector,
         // Hijacks all LSP logs and redirect them to a specific port through WebSocket connection
         outputChannel: window.createOutputChannel('Kusto Language Server')
     };
@@ -167,7 +184,12 @@ async function sendSchemaForDocument(document: NotebookDocument | TextDocument) 
     }
     // If not a notebook, then its a text document
     // If textdocument & language is not kusto, then ignore this.
-    if (!isNotebookCell(document) && !notebook && 'languageId' in document && document.languageId !== 'kusto') {
+    if (
+        !isNotebookCell(document) &&
+        !notebook &&
+        'languageId' in document &&
+        document.languageId.toLowerCase() !== 'kusto'
+    ) {
         return;
     }
     const info = getConnectionInfoFromDocumentMetadata(document);

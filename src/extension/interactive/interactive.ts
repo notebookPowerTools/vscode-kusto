@@ -31,7 +31,7 @@ async function executeSelectedQuery(document: TextDocument, start: number, end: 
             !window.activeTextEditor ||
             !window.activeTextEditor.selection ||
             window.activeTextEditor.selections.length > 1 ||
-            window.activeTextEditor.document.languageId.toLocaleLowerCase() !== 'kusto'
+            window.activeTextEditor.document.languageId.toLowerCase() !== 'kusto'
         ) {
             return;
         }

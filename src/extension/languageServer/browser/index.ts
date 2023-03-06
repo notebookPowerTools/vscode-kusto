@@ -24,14 +24,28 @@ import {
     WorkspaceEdit
 } from 'vscode';
 import { EngineSchema } from '../../kusto/schema';
-import { isJupyterNotebook, getNotebookDocument, NotebookCellScheme, registerDisposable } from '../../utils';
+import {
+    isJupyterNotebook,
+    getNotebookDocument,
+    registerDisposable,
+    NotebookCellScheme,
+    InteractiveScheme,
+    InteractiveInputScheme
+} from '../../utils';
 import { ILanguageServiceExport, LanguageService } from './kustoLanguageService';
 import * as vsclientConverter from 'vscode-languageclient/lib/common/protocolConverter';
 import { TextDocument as LSTextDocument } from 'vscode-languageserver-textdocument';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const languageService: ILanguageServiceExport = require('../../../../libs/kusto/languageService/kustoLanguageService');
 
-const selector = [{ language: 'kusto', scheme: NotebookCellScheme }];
+const selector = [
+    { language: 'kusto' },
+    { language: 'kusto', scheme: 'file' },
+    { language: 'kusto', scheme: 'untitled' },
+    { language: 'kusto', scheme: NotebookCellScheme },
+    { language: 'kusto', scheme: InteractiveScheme },
+    { language: 'kusto', scheme: InteractiveInputScheme }
+];
 
 const languageServersPerEngineSchemaAndDefaultDb = new Map<string, LanguageService>();
 const documentUriAndEngineSchemaAndDefaultDb = new Map<string, string>();
