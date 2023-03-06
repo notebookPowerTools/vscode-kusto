@@ -63,6 +63,7 @@ export async function initialize(context: ExtensionContext) {
     registerDisposable(workspace.onDidOpenTextDocument(sendSchemaForDocument));
     // Send schemas for currently opened documents as well.
     workspace.notebookDocuments.forEach(sendSchemaForDocument);
+    workspace.textDocuments.forEach(sendSchemaForDocument);
 }
 
 function startLanguageServer(context: ExtensionContext) {
