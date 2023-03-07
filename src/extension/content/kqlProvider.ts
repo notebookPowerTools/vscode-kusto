@@ -24,6 +24,15 @@ export type KustoNotebook = {
     metadata?: KustoNotebookMetadata;
 };
 
+let eolFromDocument = '';
+function determineEOL(contents = '') {
+    if (EOL || eolFromDocument) {
+        return EOL || eolFromDocument;
+    }
+    eolFromDocument = contents ? (contents.includes('\r\n') ? '\r\n' : '\n') : '';
+
+    return eolFromDocument || '\n';
+}
 export class KqlContentProvider implements vscode.NotebookSerializer {
     async deserializeNotebook(content: Uint8Array, _token: vscode.CancellationToken): Promise<vscode.NotebookData> {
         const kql = decoder.decode(content);
@@ -71,11 +80,12 @@ export class KqlContentProvider implements vscode.NotebookSerializer {
                     source
                 });
             }
+            const separator = determineEOL(kql);
             const nbCells = cells.map((item) => {
                 const kind = item.kind === 'code' ? NotebookCellKind.Code : NotebookCellKind.Markup;
                 const cell = new NotebookCellData(
                     kind,
-                    item.source.join(EOL),
+                    item.source.join(separator),
                     item.kind === 'code' ? 'kusto' : 'markdown'
                 );
                 return cell;
@@ -108,7 +118,8 @@ export class KqlContentProvider implements vscode.NotebookSerializer {
             // Ensure we have a trailing new line.
             kqlLines.push(lastLine || '');
         });
-        return encoder.encode(kqlLines.join(EOL));
+        const separator = determineEOL();
+        return encoder.encode(kqlLines.join(separator));
     }
 
     public static register() {
