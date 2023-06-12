@@ -80,7 +80,11 @@ export class Kernel extends Disposable {
             return;
         }
         const edit = new WorkspaceEdit();
-        const cellEdit = NotebookEdit.updateCellMetadata(cell.index, { statusMessage: '' });
+        const newMetadata = {
+            ...cell.metadata,
+            statusMessage: ''
+        };
+        const cellEdit = NotebookEdit.updateCellMetadata(cell.index, newMetadata);
         edit.set(cell.notebook.uri, [cellEdit]);
         // const promise = workspace.applyEdit(edit);
         task.start(Date.now());
@@ -134,10 +138,10 @@ export class Kernel extends Disposable {
             } else if (ex && typeof ex === 'object' && 'message' in ex) {
                 const innerError =
                     'innererror' in ex &&
-                    typeof ex.innererror === 'object' &&
-                    ex.innererror &&
-                    'message' in ex.innererror &&
-                    ex.innererror.message
+                        typeof ex.innererror === 'object' &&
+                        ex.innererror &&
+                        'message' in ex.innererror &&
+                        ex.innererror.message
                         ? ` (${ex.innererror.message})`
                         : '';
                 const message = `${ex.message}${innerError}`;
