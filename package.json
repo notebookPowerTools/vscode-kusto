@@ -46,11 +46,9 @@
         "virtualWorkspaces": true
     },
     "activationEvents": [
-        "onLanguage:python",
         "onNotebook:kusto-notebook",
         "onNotebook:kusto-notebook-kql",
-        "onNotebook:jupyter-notebook",
-        "onLanguage:plaintext"
+        "onNotebook:jupyter-notebook"
     ],
     "main": "./out/extension/index.js",
     "browser": "./out/extension/browser.js",
