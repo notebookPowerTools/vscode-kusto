@@ -164,6 +164,7 @@ function DataTable(props: { columnDefs: any; rowData: any }) {
                 rowMultiSelectWithClick={false}
                 onCellDoubleClicked={onCellDoubleClicked}
                 onRowSelected={onRowSelected}
+                suppressFieldDotNotation={true}
             ></AgGridReact>
             {detailsVisible && detailsJson && (
                 <ReactJson src={detailsJson} displayDataTypes={false} displayObjectSize={false} />
