@@ -160,6 +160,7 @@ function DataTable(props: { columnDefs: any; rowData: any }) {
                 defaultColDef={{ resizable: true, filter: true, sortable: true, floatingFilter: true }}
                 columnDefs={props.columnDefs}
                 rowData={props.rowData}
+                enableCellTextSelection={true}
                 rowSelection="multiple"
                 rowMultiSelectWithClick={false}
                 onCellDoubleClicked={onCellDoubleClicked}
