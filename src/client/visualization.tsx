@@ -124,7 +124,13 @@ function renderChart(results: KustoResponseDataSet, ele: HTMLElement) {
         autosize: true
     };
     // Ensures the chart is resized when the window is resized.
-    window.addEventListener('resize', () => Plotly.Plots.resize(ele));
+    let previousWidth = window.innerWidth;
+    window.addEventListener('resize', () => {
+        if (window.innerWidth !== previousWidth) {
+            previousWidth = window.innerWidth;
+            Plotly.Plots.resize(ele);
+        }
+    });
 
     if (chartType.type === 'pie') {
         const clonedColumns = results.primaryResults[0].columns.slice();
